@@ -1,0 +1,435 @@
+/* Light theme colors */
+:root[data-theme="light"] {
+  --bg-primary: #fef7ff;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #2e2e2e;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  
+  --accent-feeding: #e8f5e8;
+  --accent-feeding-text: #2d5f2d;
+  --accent-burping: #fff4e6;
+  --accent-burping-text: #8b4513;
+  --accent-diaper: #e6f3ff;
+  --accent-diaper-text: #1e3a8a;
+  --accent-sleep: #f3e8ff;
+  --accent-sleep-text: #5b21b6;
+  
+  --header-bg: #b8a9ff;
+  --header-text: #ffffff;
+  --border-color: #e8e9ea;
+  --shadow: rgba(0, 0, 0, 0.08);
+}
+
+/* Dark theme colors */
+:root[data-theme="dark"] {
+  --bg-primary: #1a1625;
+  --bg-secondary: #2a2438;
+  --bg-card: #332d41;
+  --text-primary: #e8e9ea;
+  --text-secondary: #b8b9ba;
+  --text-muted: #888989;
+  
+  --accent-feeding: #2d4a2d;
+  --accent-feeding-text: #a8d4a8;
+  --accent-burping: #4a3829;
+  --accent-burping-text: #deb887;
+  --accent-diaper: #1e3a5f;
+  --accent-diaper-text: #87ceeb;
+  --accent-sleep: #3d2a5f;
+  --accent-sleep-text: #dda0ff;
+  
+  --header-bg: #6b46c1;
+  --header-text: #ffffff;
+  --border-color: #484554;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+.app {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.app-header {
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.main-content {
+  padding: 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.active-session {
+  background: var(--accent-feeding);
+  color: var(--accent-feeding-text);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.active-session p {
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+}
+
+.stop-session-btn {
+  background: linear-gradient(135deg, #ffb3ba, #ff9fa3);
+  color: #8b0000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stop-session-btn:hover {
+  background: linear-gradient(135deg, #ff9fa3, #ff8a8a);
+  transform: translateY(-1px);
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.activity-btn {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 120px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.activity-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.activity-btn:active {
+  transform: translateY(0);
+}
+
+.activity-btn.active {
+  background: var(--accent-feeding);
+  border-color: var(--accent-feeding-text);
+  color: var(--accent-feeding-text);
+}
+
+.activity-btn:nth-child(1) {
+  border-color: var(--accent-feeding-text);
+}
+
+.activity-btn:nth-child(1):hover {
+  background: var(--accent-feeding);
+  color: var(--accent-feeding-text);
+}
+
+.activity-btn:nth-child(2) {
+  border-color: var(--accent-burping-text);
+}
+
+.activity-btn:nth-child(2):hover {
+  background: var(--accent-burping);
+  color: var(--accent-burping-text);
+}
+
+.activity-btn:nth-child(3) {
+  border-color: var(--accent-diaper-text);
+}
+
+.activity-btn:nth-child(3):hover {
+  background: var(--accent-diaper);
+  color: var(--accent-diaper-text);
+}
+
+.activity-btn:nth-child(4) {
+  border-color: var(--accent-sleep-text);
+}
+
+.activity-btn:nth-child(4):hover {
+  background: var(--accent-sleep);
+  color: var(--accent-sleep-text);
+}
+
+.activity-icon {
+  font-size: 2rem;
+}
+
+.activity-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.activity-log {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.activity-log h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.activity-log ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-log li {
+  margin-bottom: 0.5rem;
+}
+
+.activity-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  touch-action: pan-y;
+  user-select: none;
+  background: var(--bg-card);
+  border-radius: 8px;
+  margin-bottom: 2px;
+}
+
+.delete-warning {
+  background: linear-gradient(135deg, #ffb3ba, #ff9fa3);
+  color: #8b0000;
+  padding: 0.5rem 1rem;
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.9rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item:not(.editing) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.activity-type {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activity-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activity-time {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.duration {
+  color: var(--accent-feeding-text);
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.edit-btn, .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 0.9rem;
+}
+
+.edit-btn:hover {
+  background: var(--accent-diaper);
+}
+
+.delete-btn:hover {
+  background: var(--accent-burping);
+}
+
+.edit-form {
+  background: var(--accent-diaper);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.edit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.edit-row:last-child {
+  margin-bottom: 0;
+}
+
+.edit-row label {
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 60px;
+}
+
+.edit-row input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.save-btn, .cancel-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn {
+  background: var(--accent-feeding-text);
+  color: white;
+}
+
+.save-btn:hover {
+  background: var(--accent-feeding);
+  color: var(--accent-feeding-text);
+}
+
+.cancel-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+  background: var(--accent-burping);
+  color: var(--accent-burping-text);
+}
+
+@media (max-width: 768px) {
+  .button-grid {
+    gap: 0.75rem;
+  }
+  
+  .activity-btn {
+    min-height: 100px;
+    padding: 1rem;
+  }
+  
+  .activity-icon {
+    font-size: 1.5rem;
+  }
+  
+  .activity-label {
+    font-size: 0.8rem;
+  }
+  
+  .activity-item:not(.editing) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .activity-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .edit-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .edit-row input {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .edit-actions {
+    flex-direction: column;
+  }
+  
+  .save-btn, .cancel-btn {
+    width: 100%;
+  }
+}

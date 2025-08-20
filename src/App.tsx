@@ -1,0 +1,429 @@
+import { useState, useEffect } from 'react'
+import './App.css'
+
+type ActivityType = 'breastfeeding' | 'burping' | 'diaper' | 'sleep'
+
+interface Activity {
+  id: string
+  type: ActivityType
+  startTime: Date
+  endTime?: Date
+  notes?: string
+}
+
+function App() {
+  const [currentActivity, setCurrentActivity] = useState<Activity | null>(null)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<string | null>(null)
+  const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; currentX: number; isDragging: boolean }>>({})
+
+  useEffect(() => {
+    const savedActivities = localStorage.getItem('babyTracker_activities')
+    const savedCurrentActivity = localStorage.getItem('babyTracker_currentActivity')
+    const savedDarkMode = localStorage.getItem('babyTracker_darkMode')
+    
+    if (savedActivities) {
+      const parsed = JSON.parse(savedActivities).map((activity: any) => ({
+        ...activity,
+        startTime: new Date(activity.startTime),
+        endTime: activity.endTime ? new Date(activity.endTime) : undefined
+      }))
+      setActivities(parsed)
+    }
+    
+    if (savedCurrentActivity) {
+      const parsed = JSON.parse(savedCurrentActivity)
+      setCurrentActivity({
+        ...parsed,
+        startTime: new Date(parsed.startTime)
+      })
+    }
+    
+    if (savedDarkMode) {
+      setIsDarkMode(JSON.parse(savedDarkMode))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('babyTracker_activities', JSON.stringify(activities))
+  }, [activities])
+
+  useEffect(() => {
+    if (currentActivity) {
+      localStorage.setItem('babyTracker_currentActivity', JSON.stringify(currentActivity))
+    } else {
+      localStorage.removeItem('babyTracker_currentActivity')
+    }
+  }, [currentActivity])
+
+  useEffect(() => {
+    localStorage.setItem('babyTracker_darkMode', JSON.stringify(isDarkMode))
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
+  }, [isDarkMode])
+
+  const startActivity = (type: ActivityType) => {
+    const activity: Activity = {
+      id: Date.now().toString(),
+      type,
+      startTime: new Date()
+    }
+    setCurrentActivity(activity)
+  }
+
+  const stopActivity = () => {
+    if (currentActivity) {
+      const completedActivity = {
+        ...currentActivity,
+        endTime: new Date()
+      }
+      setActivities(prev => [completedActivity, ...prev])
+      setCurrentActivity(null)
+    }
+  }
+
+  const addQuickActivity = (type: ActivityType) => {
+    const activity: Activity = {
+      id: Date.now().toString(),
+      type,
+      startTime: new Date(),
+      endTime: new Date()
+    }
+    setActivities(prev => [activity, ...prev])
+  }
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const formatDuration = (start: Date, end: Date) => {
+    const diff = end.getTime() - start.getTime()
+    const minutes = Math.floor(diff / 60000)
+    const seconds = Math.floor((diff % 60000) / 1000)
+    return `${minutes}m ${seconds}s`
+  }
+
+  const getActivityIcon = (type: ActivityType) => {
+    switch (type) {
+      case 'breastfeeding': return '🍼'
+      case 'burping': return '💨'
+      case 'diaper': return '👶'
+      case 'sleep': return '😴'
+      default: return '📝'
+    }
+  }
+
+  const getActivityLabel = (type: ActivityType) => {
+    switch (type) {
+      case 'breastfeeding': return 'Feeding'
+      case 'burping': return 'Burping'
+      case 'diaper': return 'Diaper'
+      case 'sleep': return 'Sleep'
+      default: return 'Activity'
+    }
+  }
+
+  const handleActivityClick = (type: ActivityType) => {
+    if (type === 'breastfeeding' || type === 'sleep') {
+      if (currentActivity?.type === type) {
+        stopActivity()
+      } else {
+        startActivity(type)
+      }
+    } else {
+      addQuickActivity(type)
+    }
+  }
+
+  const deleteActivity = (id: string) => {
+    setActivities(prev => prev.filter(activity => activity.id !== id))
+  }
+
+  const updateActivity = (id: string, updates: Partial<Activity>) => {
+    setActivities(prev => prev.map(activity => 
+      activity.id === id ? { ...activity, ...updates } : activity
+    ))
+    setEditingActivity(null)
+  }
+
+  const formatTimeForInput = (date: Date) => {
+    return date.toISOString().slice(0, 16)
+  }
+
+  const parseTimeFromInput = (timeString: string) => {
+    return new Date(timeString)
+  }
+
+  const handleTouchStart = (e: React.TouchEvent, activityId: string) => {
+    const touch = e.touches[0]
+    setSwipeStates(prev => ({
+      ...prev,
+      [activityId]: {
+        startX: touch.clientX,
+        currentX: touch.clientX,
+        isDragging: true
+      }
+    }))
+  }
+
+  const handleTouchMove = (e: React.TouchEvent, activityId: string) => {
+    const touch = e.touches[0]
+    const swipeState = swipeStates[activityId]
+    
+    if (swipeState?.isDragging) {
+      setSwipeStates(prev => ({
+        ...prev,
+        [activityId]: {
+          ...swipeState,
+          currentX: touch.clientX
+        }
+      }))
+    }
+  }
+
+  const handleTouchEnd = (activityId: string) => {
+    const swipeState = swipeStates[activityId]
+    
+    if (swipeState?.isDragging) {
+      const swipeDistance = swipeState.currentX - swipeState.startX
+      const swipeThreshold = 100 // pixels
+      
+      if (swipeDistance > swipeThreshold) {
+        // Swiped right - delete the activity
+        deleteActivity(activityId)
+      }
+      
+      // Reset swipe state
+      setSwipeStates(prev => {
+        const newState = { ...prev }
+        delete newState[activityId]
+        return newState
+      })
+    }
+  }
+
+  const getSwipeTransform = (activityId: string) => {
+    const swipeState = swipeStates[activityId]
+    if (swipeState?.isDragging) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
+      return `translateX(${distance}px)`
+    }
+    return 'translateX(0px)'
+  }
+
+  const getSwipeOpacity = (activityId: string) => {
+    const swipeState = swipeStates[activityId]
+    if (swipeState?.isDragging) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
+      const opacity = Math.max(0.3, 1 - (distance / 200))
+      return opacity
+    }
+    return 1
+  }
+
+  const getSwipeBackgroundColor = (activityId: string) => {
+    const swipeState = swipeStates[activityId]
+    if (swipeState?.isDragging) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
+      const intensity = Math.min(1, distance / 150) // Fully red at 150px
+      const red = Math.floor(255 * intensity)
+      const green = Math.floor(255 * (1 - intensity * 0.8)) // Keep some green initially
+      const blue = Math.floor(255 * (1 - intensity * 0.8))
+      return `rgb(${red}, ${green}, ${blue})`
+    }
+    return ''
+  }
+
+  const shouldShowDeleteWarning = (activityId: string) => {
+    const swipeState = swipeStates[activityId]
+    if (swipeState?.isDragging) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
+      return distance > 30 // Show warning after 30px swipe
+    }
+    return false
+  }
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1>Baby Tracker</h1>
+        <button 
+          className="theme-toggle"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          aria-label="Toggle dark mode"
+        >
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
+      </header>
+
+      <main className="main-content">
+        {currentActivity && (
+          <div className="active-session">
+            <p>
+              {getActivityIcon(currentActivity.type)} {getActivityLabel(currentActivity.type)} started at {formatTime(currentActivity.startTime)}
+            </p>
+            <button className="stop-session-btn" onClick={stopActivity}>
+              Stop {getActivityLabel(currentActivity.type)}
+            </button>
+          </div>
+        )}
+
+        <div className="button-grid">
+          <button 
+            className={`activity-btn ${currentActivity?.type === 'breastfeeding' ? 'active' : ''}`}
+            onClick={() => handleActivityClick('breastfeeding')}
+          >
+            <span className="activity-icon">🍼</span>
+            <span className="activity-label">
+              {currentActivity?.type === 'breastfeeding' ? 'Stop Feeding' : 'Start Feeding'}
+            </span>
+          </button>
+          
+          <button 
+            className="activity-btn"
+            onClick={() => handleActivityClick('burping')}
+          >
+            <span className="activity-icon">💨</span>
+            <span className="activity-label">Burping</span>
+          </button>
+          
+          <button 
+            className="activity-btn"
+            onClick={() => handleActivityClick('diaper')}
+          >
+            <span className="activity-icon">👶</span>
+            <span className="activity-label">Diaper</span>
+          </button>
+          
+          <button 
+            className={`activity-btn ${currentActivity?.type === 'sleep' ? 'active' : ''}`}
+            onClick={() => handleActivityClick('sleep')}
+          >
+            <span className="activity-icon">😴</span>
+            <span className="activity-label">
+              {currentActivity?.type === 'sleep' ? 'Stop Sleep' : 'Start Sleep'}
+            </span>
+          </button>
+        </div>
+
+        <div className="activity-log">
+          <h3>Recent Activities</h3>
+          {activities.length === 0 ? (
+            <p>No activities recorded yet</p>
+          ) : (
+            <ul>
+              {activities.slice(0, 10).map(activity => (
+                <li key={activity.id}>
+                  {shouldShowDeleteWarning(activity.id) && (
+                    <div className="delete-warning">
+                      🗑️ Release to delete
+                    </div>
+                  )}
+                  <div
+                    className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                    style={{
+                      transform: getSwipeTransform(activity.id),
+                      opacity: getSwipeOpacity(activity.id),
+                      backgroundColor: getSwipeBackgroundColor(activity.id),
+                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
+                    }}
+                    onTouchStart={(e) => handleTouchStart(e, activity.id)}
+                    onTouchMove={(e) => handleTouchMove(e, activity.id)}
+                    onTouchEnd={() => handleTouchEnd(activity.id)}
+                  >
+                  {editingActivity === activity.id ? (
+                    <div className="edit-form">
+                      <div className="edit-row">
+                        <span className="activity-type">
+                          {getActivityIcon(activity.type)} {getActivityLabel(activity.type)}
+                        </span>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => deleteActivity(activity.id)}
+                          title="Delete activity"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                      <div className="edit-row">
+                        <label>Start:</label>
+                        <input
+                          type="datetime-local"
+                          defaultValue={formatTimeForInput(activity.startTime)}
+                          onChange={(e) => {
+                            const newStartTime = parseTimeFromInput(e.target.value)
+                            updateActivity(activity.id, { startTime: newStartTime })
+                          }}
+                        />
+                      </div>
+                      {(activity.type === 'breastfeeding' || activity.type === 'sleep') && activity.endTime && (
+                        <div className="edit-row">
+                          <label>End:</label>
+                          <input
+                            type="datetime-local"
+                            defaultValue={formatTimeForInput(activity.endTime)}
+                            onChange={(e) => {
+                              const newEndTime = parseTimeFromInput(e.target.value)
+                              updateActivity(activity.id, { endTime: newEndTime })
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="edit-actions">
+                        <button 
+                          className="save-btn"
+                          onClick={() => setEditingActivity(null)}
+                        >
+                          Save
+                        </button>
+                        <button 
+                          className="cancel-btn"
+                          onClick={() => setEditingActivity(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="activity-type">
+                        {getActivityIcon(activity.type)} {getActivityLabel(activity.type)}
+                      </span>
+                      <div className="activity-info">
+                        <span className="activity-time">
+                          {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                            <>
+                              {formatTime(activity.startTime)}
+                              {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                              {activity.endTime && (
+                                <span className="duration">
+                                  ({formatDuration(activity.startTime, activity.endTime)})
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            formatTime(activity.startTime)
+                          )}
+                        </span>
+                        <button 
+                          className="edit-btn"
+                          onClick={() => setEditingActivity(activity.id)}
+                          title="Edit activity"
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default App
