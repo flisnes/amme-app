@@ -383,7 +383,7 @@ function App() {
                         </button>
                       </div>
                       <div className="edit-row">
-                        <label>Start:</label>
+                        <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
                         <input
                           type="datetime-local"
                           value={formatTimeForInput(activity.startTime)}
