@@ -64,6 +64,19 @@ function App() {
   }, [isDarkMode])
 
   const startActivity = (type: ActivityType) => {
+    // If there's already a current activity, stop it first
+    if (currentActivity) {
+      const completedActivity = {
+        ...currentActivity,
+        endTime: new Date()
+      }
+      setActivities(prev => {
+        const newActivities = [completedActivity, ...prev]
+        return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+      })
+    }
+
+    // Start the new activity
     const activity: Activity = {
       id: Date.now().toString(),
       type,
@@ -88,6 +101,20 @@ function App() {
   }
 
   const addQuickActivity = (type: ActivityType) => {
+    // If there's a current activity (feeding/sleeping), stop it first
+    if (currentActivity) {
+      const completedActivity = {
+        ...currentActivity,
+        endTime: new Date()
+      }
+      setActivities(prev => {
+        const newActivities = [completedActivity, ...prev]
+        return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+      })
+      setCurrentActivity(null)
+    }
+
+    // Add the new instant activity
     const activity: Activity = {
       id: Date.now().toString(),
       type,
