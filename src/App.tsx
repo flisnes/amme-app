@@ -17,6 +17,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; currentX: number; isDragging: boolean }>>({})
+  const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const savedActivities = localStorage.getItem('babyTracker_activities')
@@ -77,7 +78,11 @@ function App() {
         ...currentActivity,
         endTime: new Date()
       }
-      setActivities(prev => [completedActivity, ...prev])
+      setActivities(prev => {
+        const newActivities = [completedActivity, ...prev]
+        // Sort to maintain chronological order (newest first)
+        return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+      })
       setCurrentActivity(null)
     }
   }
@@ -89,7 +94,11 @@ function App() {
       startTime: new Date(),
       endTime: new Date()
     }
-    setActivities(prev => [activity, ...prev])
+    setActivities(prev => {
+      const newActivities = [activity, ...prev]
+      // Sort to maintain chronological order (newest first)
+      return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+    })
   }
 
   const formatTime = (date: Date) => {
@@ -140,9 +149,14 @@ function App() {
   }
 
   const updateActivity = (id: string, updates: Partial<Activity>) => {
-    setActivities(prev => prev.map(activity => 
-      activity.id === id ? { ...activity, ...updates } : activity
-    ))
+    setActivities(prev => {
+      const updatedActivities = prev.map(activity => 
+        activity.id === id ? { ...activity, ...updates } : activity
+      )
+      
+      // Re-sort activities by start time (newest first) to maintain chronological order
+      return updatedActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+    })
     setEditingActivity(null)
   }
 
@@ -340,17 +354,14 @@ function App() {
             <ul>
               {activities.slice(0, 10).map(activity => (
                 <li key={activity.id}>
-                  {shouldShowDeleteWarning(activity.id) && (
-                    <div className="delete-warning">
-                      🗑️ Release to delete
-                    </div>
-                  )}
                   <div
                     className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
                     style={{
                       transform: getSwipeTransform(activity.id),
                       opacity: getSwipeOpacity(activity.id),
                       backgroundColor: getSwipeBackgroundColor(activity.id),
+                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                                 slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
                                  'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
                     }}
                     onTouchStart={(e) => handleTouchStart(e, activity.id)}
@@ -378,7 +389,13 @@ function App() {
                           defaultValue={formatTimeForInput(activity.startTime)}
                           onChange={(e) => {
                             const newStartTime = parseTimeFromInput(e.target.value)
-                            updateActivity(activity.id, { startTime: newStartTime })
+                            // Ensure start time is not after end time
+                            if (activity.endTime && newStartTime > activity.endTime) {
+                              // If start time is after end time, also update end time
+                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                            } else {
+                              updateActivity(activity.id, { startTime: newStartTime })
+                            }
                           }}
                         />
                       </div>
@@ -390,7 +407,13 @@ function App() {
                             defaultValue={formatTimeForInput(activity.endTime)}
                             onChange={(e) => {
                               const newEndTime = parseTimeFromInput(e.target.value)
-                              updateActivity(activity.id, { endTime: newEndTime })
+                              // Ensure end time is not before start time
+                              if (newEndTime < activity.startTime) {
+                                // If end time is before start time, also update start time
+                                updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                              } else {
+                                updateActivity(activity.id, { endTime: newEndTime })
+                              }
                             }}
                           />
                         </div>
