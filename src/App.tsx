@@ -9,6 +9,7 @@ interface Activity {
   startTime: Date
   endTime?: Date
   notes?: string
+  diaperType?: 'pee' | 'poo' | 'both'
 }
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; currentX: number; isDragging: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
+  const [showDiaperOptions, setShowDiaperOptions] = useState(false)
 
   useEffect(() => {
     const savedActivities = localStorage.getItem('babyTracker_activities')
@@ -100,7 +102,7 @@ function App() {
     }
   }
 
-  const addQuickActivity = (type: ActivityType) => {
+  const addQuickActivity = (type: ActivityType, diaperType?: 'pee' | 'poo' | 'both') => {
     // If there's a current activity (feeding/sleeping), stop it first
     if (currentActivity) {
       const completedActivity = {
@@ -119,13 +121,17 @@ function App() {
       id: Date.now().toString(),
       type,
       startTime: new Date(),
-      endTime: new Date()
+      endTime: new Date(),
+      ...(type === 'diaper' && diaperType ? { diaperType } : {})
     }
     setActivities(prev => {
       const newActivities = [activity, ...prev]
       // Sort to maintain chronological order (newest first)
       return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
     })
+    
+    // Close diaper options if they were open
+    setShowDiaperOptions(false)
   }
 
   const formatTime = (date: Date) => {
@@ -149,11 +155,15 @@ function App() {
     }
   }
 
-  const getActivityLabel = (type: ActivityType) => {
-    switch (type) {
+  const getActivityLabel = (activity: Activity) => {
+    switch (activity.type) {
       case 'breastfeeding': return 'Feeding'
       case 'burping': return 'Burping'
-      case 'diaper': return 'Diaper'
+      case 'diaper': 
+        if (activity.diaperType) {
+          return `Diaper (${activity.diaperType})`
+        }
+        return 'Diaper'
       case 'sleep': return 'Sleep'
       default: return 'Activity'
     }
@@ -166,6 +176,8 @@ function App() {
       } else {
         startActivity(type)
       }
+    } else if (type === 'diaper') {
+      setShowDiaperOptions(true)
     } else {
       addQuickActivity(type)
     }
@@ -327,10 +339,10 @@ function App() {
         {currentActivity && (
           <div className="active-session">
             <p>
-              {getActivityIcon(currentActivity.type)} {getActivityLabel(currentActivity.type)} started at {formatTime(currentActivity.startTime)}
+              {getActivityIcon(currentActivity.type)} {getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
             </p>
             <button className="stop-session-btn" onClick={stopActivity}>
-              Stop {getActivityLabel(currentActivity.type)}
+              Stop {getActivityLabel(currentActivity)}
             </button>
           </div>
         )}
@@ -373,6 +385,38 @@ function App() {
           </button>
         </div>
 
+        {showDiaperOptions && (
+          <div className="diaper-options">
+            <h3>What type of diaper change?</h3>
+            <div className="diaper-buttons">
+              <button 
+                className="diaper-type-btn pee"
+                onClick={() => addQuickActivity('diaper', 'pee')}
+              >
+                💧 Pee
+              </button>
+              <button 
+                className="diaper-type-btn poo"
+                onClick={() => addQuickActivity('diaper', 'poo')}
+              >
+                💩 Poo
+              </button>
+              <button 
+                className="diaper-type-btn both"
+                onClick={() => addQuickActivity('diaper', 'both')}
+              >
+                💧💩 Both
+              </button>
+            </div>
+            <button 
+              className="cancel-diaper-btn"
+              onClick={() => setShowDiaperOptions(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
         <div className="activity-log">
           <h3>Recent Activities</h3>
           {activities.length === 0 ? (
@@ -399,7 +443,7 @@ function App() {
                     <div className="edit-form">
                       <div className="edit-row">
                         <span className="activity-type">
-                          {getActivityIcon(activity.type)} {getActivityLabel(activity.type)}
+                          {getActivityIcon(activity.type)} {getActivityLabel(activity)}
                         </span>
                         <button 
                           className="delete-btn"
@@ -445,6 +489,21 @@ function App() {
                           />
                         </div>
                       )}
+                      {activity.type === 'diaper' && (
+                        <div className="edit-row">
+                          <label>Type:</label>
+                          <select
+                            value={activity.diaperType || 'pee'}
+                            onChange={(e) => {
+                              updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                            }}
+                          >
+                            <option value="pee">💧 Pee</option>
+                            <option value="poo">💩 Poo</option>
+                            <option value="both">💧💩 Both</option>
+                          </select>
+                        </div>
+                      )}
                       <div className="edit-actions">
                         <button 
                           className="save-btn"
@@ -473,7 +532,7 @@ function App() {
                           {shouldShowDeleteIcon(activity.id) ? '🗑️' : getActivityIcon(activity.type)}
                         </span>
                         {' '}
-                        {getActivityLabel(activity.type)}
+                        {getActivityLabel(activity)}
                       </span>
                       <div className="activity-info">
                         <span className="activity-time">

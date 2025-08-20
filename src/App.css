@@ -320,7 +320,7 @@
   min-width: 60px;
 }
 
-.edit-row input {
+.edit-row input, .edit-row select {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -329,6 +329,11 @@
   font-size: 0.9rem;
   flex: 1;
   margin-left: 1rem;
+  font-family: inherit;
+}
+
+.edit-row select {
+  cursor: pointer;
 }
 
 .edit-actions {
@@ -368,6 +373,87 @@
   color: var(--accent-burping-text);
 }
 
+.diaper-options {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  text-align: center;
+}
+
+.diaper-options h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.diaper-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.diaper-type-btn {
+  padding: 1rem;
+  border: 2px solid;
+  border-radius: 12px;
+  background: var(--bg-card);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.diaper-type-btn.pee {
+  border-color: #4fc3f7;
+  color: #0277bd;
+}
+
+.diaper-type-btn.pee:hover {
+  background: #e1f5fe;
+}
+
+.diaper-type-btn.poo {
+  border-color: #8d6e63;
+  color: #5d4037;
+}
+
+.diaper-type-btn.poo:hover {
+  background: #efebe9;
+}
+
+.diaper-type-btn.both {
+  border-color: #ff9800;
+  color: #e65100;
+}
+
+.diaper-type-btn.both:hover {
+  background: #fff3e0;
+}
+
+.cancel-diaper-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-diaper-btn:hover {
+  background: var(--accent-burping);
+  color: var(--accent-burping-text);
+}
+
 @media (max-width: 768px) {
   .button-grid {
     gap: 0.75rem;
@@ -403,7 +489,7 @@
     gap: 0.5rem;
   }
   
-  .edit-row input {
+  .edit-row input, .edit-row select {
     margin-left: 0;
     width: 100%;
   }
@@ -414,5 +500,16 @@
   
   .save-btn, .cancel-btn {
     width: 100%;
+  }
+  
+  .diaper-buttons {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .diaper-type-btn {
+    min-height: 60px;
+    flex-direction: row;
+    justify-content: center;
   }
 }
