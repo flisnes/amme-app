@@ -186,11 +186,21 @@ function App() {
     
     if (swipeState?.isDragging) {
       const swipeDistance = swipeState.currentX - swipeState.startX
-      const swipeThreshold = 100 // pixels
+      const swipeThreshold = window.innerWidth * 0.6 // 3/5 of screen width
       
       if (swipeDistance > swipeThreshold) {
-        // Swiped right - delete the activity
-        deleteActivity(activityId)
+        // Start slide-out animation
+        setSlidingOutItems(prev => new Set(prev).add(activityId))
+        
+        // Delete after animation completes
+        setTimeout(() => {
+          deleteActivity(activityId)
+          setSlidingOutItems(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(activityId)
+            return newSet
+          })
+        }, 300) // Match animation duration
       }
       
       // Reset swipe state
@@ -204,6 +214,12 @@ function App() {
 
   const getSwipeTransform = (activityId: string) => {
     const swipeState = swipeStates[activityId]
+    
+    // If item is sliding out, move it completely off screen
+    if (slidingOutItems.has(activityId)) {
+      return `translateX(${window.innerWidth}px)`
+    }
+    
     if (swipeState?.isDragging) {
       const distance = Math.max(0, swipeState.currentX - swipeState.startX)
       return `translateX(${distance}px)`
@@ -234,11 +250,21 @@ function App() {
     return ''
   }
 
-  const shouldShowDeleteWarning = (activityId: string) => {
+  const getDeleteIconScale = (activityId: string) => {
     const swipeState = swipeStates[activityId]
     if (swipeState?.isDragging) {
       const distance = Math.max(0, swipeState.currentX - swipeState.startX)
-      return distance > 30 // Show warning after 30px swipe
+      const scale = Math.min(2, 1 + (distance / 100)) // Scale from 1x to 2x over 100px
+      return scale
+    }
+    return 1
+  }
+
+  const shouldShowDeleteIcon = (activityId: string) => {
+    const swipeState = swipeStates[activityId]
+    if (swipeState?.isDragging) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
+      return distance > 20 // Show delete icon after 20px swipe
     }
     return false
   }
@@ -325,7 +351,7 @@ function App() {
                       transform: getSwipeTransform(activity.id),
                       opacity: getSwipeOpacity(activity.id),
                       backgroundColor: getSwipeBackgroundColor(activity.id),
-                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
+                                 'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
                     }}
                     onTouchStart={(e) => handleTouchStart(e, activity.id)}
                     onTouchMove={(e) => handleTouchMove(e, activity.id)}
@@ -387,7 +413,17 @@ function App() {
                   ) : (
                     <>
                       <span className="activity-type">
-                        {getActivityIcon(activity.type)} {getActivityLabel(activity.type)}
+                        <span 
+                          className="activity-icon-container"
+                          style={{
+                            transform: `scale(${getDeleteIconScale(activity.id)})`,
+                            transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                          }}
+                        >
+                          {shouldShowDeleteIcon(activity.id) ? '🗑️' : getActivityIcon(activity.type)}
+                        </span>
+                        {' '}
+                        {getActivityLabel(activity.type)}
                       </span>
                       <div className="activity-info">
                         <span className="activity-time">

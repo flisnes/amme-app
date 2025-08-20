@@ -241,26 +241,9 @@
   margin-bottom: 2px;
 }
 
-.delete-warning {
-  background: linear-gradient(135deg, #ffb3ba, #ff9fa3);
-  color: #8b0000;
-  padding: 0.5rem 1rem;
-  border-radius: 6px 6px 0 0;
-  font-weight: 600;
-  text-align: center;
-  font-size: 0.9rem;
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.activity-icon-container {
+  display: inline-block;
+  transform-origin: center;
 }
 
 .activity-item:last-child {
