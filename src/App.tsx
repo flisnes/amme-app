@@ -386,7 +386,7 @@ function App() {
                         <label>Start:</label>
                         <input
                           type="datetime-local"
-                          defaultValue={formatTimeForInput(activity.startTime)}
+                          value={formatTimeForInput(activity.startTime)}
                           onChange={(e) => {
                             const newStartTime = parseTimeFromInput(e.target.value)
                             // Ensure start time is not after end time
@@ -404,7 +404,7 @@ function App() {
                           <label>End:</label>
                           <input
                             type="datetime-local"
-                            defaultValue={formatTimeForInput(activity.endTime)}
+                            value={formatTimeForInput(activity.endTime)}
                             onChange={(e) => {
                               const newEndTime = parseTimeFromInput(e.target.value)
                               // Ensure end time is not before start time
