@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-type ActivityType = 'breastfeeding' | 'burping' | 'diaper' | 'sleep'
+type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
 
 interface Activity {
   id: string
@@ -149,7 +149,6 @@ function App() {
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {
       case 'breastfeeding': return '🍼'
-      case 'burping': return '💨'
       case 'diaper': return '👶'
       case 'sleep': return '😴'
       default: return '📝'
@@ -159,7 +158,6 @@ function App() {
   const getActivityLabel = (activity: Activity) => {
     switch (activity.type) {
       case 'breastfeeding': return 'Feeding'
-      case 'burping': return 'Burping'
       case 'diaper': 
         if (activity.diaperType) {
           return `Diaper (${activity.diaperType})`
@@ -179,8 +177,6 @@ function App() {
       }
     } else if (type === 'diaper') {
       setShowDiaperOptions(true)
-    } else {
-      addQuickActivity(type)
     }
   }
 
@@ -412,14 +408,6 @@ function App() {
             <span className="activity-label">
               {currentActivity?.type === 'breastfeeding' ? 'Stop Feeding' : 'Start Feeding'}
             </span>
-          </button>
-          
-          <button 
-            className="activity-btn"
-            onClick={() => handleActivityClick('burping')}
-          >
-            <span className="activity-icon">💨</span>
-            <span className="activity-label">Burping</span>
           </button>
           
           <button 
