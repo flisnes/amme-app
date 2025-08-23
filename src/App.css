@@ -455,6 +455,87 @@
   color: var(--accent-burping-text);
 }
 
+.feeding-options {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  text-align: center;
+}
+
+.feeding-options h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.feeding-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.feeding-type-btn {
+  padding: 1rem;
+  border: 2px solid;
+  border-radius: 12px;
+  background: var(--bg-card);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.feeding-type-btn.left {
+  border-color: #e91e63;
+  color: #ad1457;
+}
+
+.feeding-type-btn.left:hover {
+  background: #fce4ec;
+}
+
+.feeding-type-btn.right {
+  border-color: #9c27b0;
+  color: #6a1b9a;
+}
+
+.feeding-type-btn.right:hover {
+  background: #f3e5f5;
+}
+
+.feeding-type-btn.bottle {
+  border-color: #2196f3;
+  color: #1565c0;
+}
+
+.feeding-type-btn.bottle:hover {
+  background: #e3f2fd;
+}
+
+.cancel-feeding-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-feeding-btn:hover {
+  background: var(--accent-burping);
+  color: var(--accent-burping-text);
+}
+
 .historical-log {
   background: var(--bg-card);
   border-radius: 16px;
@@ -571,6 +652,17 @@
   }
   
   .diaper-type-btn {
+    min-height: 60px;
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .feeding-buttons {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .feeding-type-btn {
     min-height: 60px;
     flex-direction: row;
     justify-content: center;

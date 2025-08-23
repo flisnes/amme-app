@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -10,6 +11,7 @@ interface Activity {
   endTime?: Date
   notes?: string
   diaperType?: 'pee' | 'poo' | 'both'
+  feedingType?: 'left' | 'right' | 'bottle'
 }
 
 function App() {
@@ -20,6 +22,7 @@ function App() {
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; currentX: number; isDragging: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [showDiaperOptions, setShowDiaperOptions] = useState(false)
+  const [showFeedingOptions, setShowFeedingOptions] = useState(false)
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -66,7 +69,7 @@ function App() {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
   }, [isDarkMode])
 
-  const startActivity = (type: ActivityType) => {
+  const startActivity = (type: ActivityType, feedingType?: 'left' | 'right' | 'bottle') => {
     // If there's already a current activity, stop it first
     if (currentActivity) {
       const completedActivity = {
@@ -83,9 +86,13 @@ function App() {
     const activity: Activity = {
       id: Date.now().toString(),
       type,
-      startTime: new Date()
+      startTime: new Date(),
+      ...(type === 'breastfeeding' && feedingType ? { feedingType } : {})
     }
     setCurrentActivity(activity)
+    
+    // Close feeding options if they were open
+    setShowFeedingOptions(false)
   }
 
   const stopActivity = () => {
@@ -148,16 +155,20 @@ function App() {
 
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {
-      case 'breastfeeding': return '🍼'
-      case 'diaper': return '👶'
-      case 'sleep': return '😴'
+      case 'breastfeeding': return <TbBottle size={20} />
+      case 'diaper': return <TbDiaper size={20} />
+      case 'sleep': return <TbMoon size={20} />
       default: return '📝'
     }
   }
 
   const getActivityLabel = (activity: Activity) => {
     switch (activity.type) {
-      case 'breastfeeding': return 'Feeding'
+      case 'breastfeeding': 
+        if (activity.feedingType) {
+          return `Feeding (${activity.feedingType})`
+        }
+        return 'Feeding'
       case 'diaper': 
         if (activity.diaperType) {
           return `Diaper (${activity.diaperType})`
@@ -169,8 +180,14 @@ function App() {
   }
 
   const handleActivityClick = (type: ActivityType) => {
-    if (type === 'breastfeeding' || type === 'sleep') {
-      if (currentActivity?.type === type) {
+    if (type === 'breastfeeding') {
+      if (currentActivity?.type === 'breastfeeding') {
+        stopActivity()
+      } else {
+        setShowFeedingOptions(true)
+      }
+    } else if (type === 'sleep') {
+      if (currentActivity?.type === 'sleep') {
         stopActivity()
       } else {
         startActivity(type)
@@ -404,7 +421,7 @@ function App() {
             className={`activity-btn ${currentActivity?.type === 'breastfeeding' ? 'active' : ''}`}
             onClick={() => handleActivityClick('breastfeeding')}
           >
-            <span className="activity-icon">🍼</span>
+            <span className="activity-icon"><TbBottle size={24} /></span>
             <span className="activity-label">
               {currentActivity?.type === 'breastfeeding' ? 'Stop Feeding' : 'Start Feeding'}
             </span>
@@ -414,7 +431,7 @@ function App() {
             className="activity-btn"
             onClick={() => handleActivityClick('diaper')}
           >
-            <span className="activity-icon">👶</span>
+            <span className="activity-icon"><TbDiaper size={24} /></span>
             <span className="activity-label">Diaper</span>
           </button>
           
@@ -422,7 +439,7 @@ function App() {
             className={`activity-btn ${currentActivity?.type === 'sleep' ? 'active' : ''}`}
             onClick={() => handleActivityClick('sleep')}
           >
-            <span className="activity-icon">😴</span>
+            <span className="activity-icon"><TbMoon size={24} /></span>
             <span className="activity-label">
               {currentActivity?.type === 'sleep' ? 'Stop Sleep' : 'Start Sleep'}
             </span>
@@ -437,24 +454,56 @@ function App() {
                 className="diaper-type-btn pee"
                 onClick={() => addQuickActivity('diaper', 'pee')}
               >
-                💧 Pee
+                <TbDroplet size={20} /> Pee
               </button>
               <button 
                 className="diaper-type-btn poo"
                 onClick={() => addQuickActivity('diaper', 'poo')}
               >
-                💩 Poo
+                <TbPoo size={20} /> Poo
               </button>
               <button 
                 className="diaper-type-btn both"
                 onClick={() => addQuickActivity('diaper', 'both')}
               >
-                💧💩 Both
+                <TbDroplet size={16} /><TbPoo size={16} /> Both
               </button>
             </div>
             <button 
               className="cancel-diaper-btn"
               onClick={() => setShowDiaperOptions(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {showFeedingOptions && (
+          <div className="feeding-options">
+            <h3>What type of feeding?</h3>
+            <div className="feeding-buttons">
+              <button 
+                className="feeding-type-btn left"
+                onClick={() => startActivity('breastfeeding', 'left')}
+              >
+                <TbArrowBigLeft size={20} /> Left Breast
+              </button>
+              <button 
+                className="feeding-type-btn right"
+                onClick={() => startActivity('breastfeeding', 'right')}
+              >
+                <TbArrowBigRight size={20} /> Right Breast
+              </button>
+              <button 
+                className="feeding-type-btn bottle"
+                onClick={() => startActivity('breastfeeding', 'bottle')}
+              >
+                <TbBabyBottle size={20} /> Bottle
+              </button>
+            </div>
+            <button 
+              className="cancel-feeding-btn"
+              onClick={() => setShowFeedingOptions(false)}
             >
               Cancel
             </button>
@@ -533,6 +582,21 @@ function App() {
                           />
                         </div>
                       )}
+                      {activity.type === 'breastfeeding' && (
+                        <div className="edit-row">
+                          <label>Type:</label>
+                          <select
+                            value={activity.feedingType || 'left'}
+                            onChange={(e) => {
+                              updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                            }}
+                          >
+                            <option value="left">Left Breast</option>
+                            <option value="right">Right Breast</option>
+                            <option value="bottle">Bottle</option>
+                          </select>
+                        </div>
+                      )}
                       {activity.type === 'diaper' && (
                         <div className="edit-row">
                           <label>Type:</label>
@@ -542,9 +606,9 @@ function App() {
                               updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                             }}
                           >
-                            <option value="pee">💧 Pee</option>
-                            <option value="poo">💩 Poo</option>
-                            <option value="both">💧💩 Both</option>
+                            <option value="pee">Pee</option>
+                            <option value="poo">Poo</option>
+                            <option value="both">Both</option>
                           </select>
                         </div>
                       )}
@@ -697,6 +761,21 @@ function App() {
                                   />
                                 </div>
                               )}
+                              {activity.type === 'breastfeeding' && (
+                                <div className="edit-row">
+                                  <label>Type:</label>
+                                  <select
+                                    value={activity.feedingType || 'left'}
+                                    onChange={(e) => {
+                                      updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                                    }}
+                                  >
+                                    <option value="left">Left Breast</option>
+                                    <option value="right">Right Breast</option>
+                                    <option value="bottle">Bottle</option>
+                                  </select>
+                                </div>
+                              )}
                               {activity.type === 'diaper' && (
                                 <div className="edit-row">
                                   <label>Type:</label>
@@ -706,9 +785,9 @@ function App() {
                                       updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                                     }}
                                   >
-                                    <option value="pee">💧 Pee</option>
-                                    <option value="poo">💩 Poo</option>
-                                    <option value="both">💧💩 Both</option>
+                                    <option value="pee">Pee</option>
+                                    <option value="poo">Poo</option>
+                                    <option value="both">Both</option>
                                   </select>
                                 </div>
                               )}
