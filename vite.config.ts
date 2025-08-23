@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'Baby Tracker',
         short_name: 'BabyTracker',
-        description: 'Track breastfeeding, burping, and diaper changes',
+        description: 'Track breastfeeding, sleeping, and diaper changes',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
