@@ -181,19 +181,31 @@ function App() {
 
   const handleActivityClick = (type: ActivityType) => {
     if (type === 'breastfeeding') {
+      // Close diaper options if they're open
+      setShowDiaperOptions(false)
+      
       if (currentActivity?.type === 'breastfeeding') {
         stopActivity()
       } else {
         setShowFeedingOptions(true)
       }
-    } else if (type === 'sleep') {
-      if (currentActivity?.type === 'sleep') {
-        stopActivity()
-      } else {
-        startActivity(type)
-      }
     } else if (type === 'diaper') {
+      // Close feeding options if they're open
+      setShowFeedingOptions(false)
+      
       setShowDiaperOptions(true)
+    } else {
+      // Close both option modals if user clicks another button
+      setShowFeedingOptions(false)
+      setShowDiaperOptions(false)
+      
+      if (type === 'sleep') {
+        if (currentActivity?.type === 'sleep') {
+          stopActivity()
+        } else {
+          startActivity(type)
+        }
+      }
     }
   }
 
@@ -493,7 +505,7 @@ function App() {
                   className="feeding-type-btn right"
                   onClick={() => startActivity('breastfeeding', 'right')}
                 >
-                  <TbArrowBigRight size={20} /> Right Breast
+                  Right Breast <TbArrowBigRight size={20} />
                 </button>
               </div>
               <button 
