@@ -348,10 +348,19 @@ function App() {
     return false
   }
 
-  const isWithin24Hours = (date: Date) => {
-    const now = new Date()
-    const timeDiff = now.getTime() - date.getTime()
-    return timeDiff < 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+  const isToday = (date: Date) => {
+    const today = new Date()
+    return date.toDateString() === today.toDateString()
+  }
+
+  const isYesterday = (date: Date) => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    return date.toDateString() === yesterday.toDateString()
+  }
+
+  const isTodayOrYesterday = (date: Date) => {
+    return isToday(date) || isYesterday(date)
   }
 
   const formatDate = (date: Date) => {
@@ -399,8 +408,9 @@ function App() {
     })
   }
 
-  const recentActivities = activities.filter(activity => isWithin24Hours(activity.startTime))
-  const historicalActivities = activities.filter(activity => !isWithin24Hours(activity.startTime))
+  const todayActivities = activities.filter(activity => isToday(activity.startTime))
+  const yesterdayActivities = activities.filter(activity => isYesterday(activity.startTime))
+  const historicalActivities = activities.filter(activity => !isTodayOrYesterday(activity.startTime))
   const historicalGroups = groupActivitiesByDate(historicalActivities)
 
   return (
@@ -417,17 +427,6 @@ function App() {
       </header>
 
       <main className="main-content">
-        {currentActivity && (
-          <div className="active-session">
-            <p>
-              {getActivityIcon(currentActivity.type)} {getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
-            </p>
-            <button className="stop-session-btn" onClick={stopActivity}>
-              Stop {getActivityLabel(currentActivity)}
-            </button>
-          </div>
-        )}
-
         <div className="button-grid">
           <button 
             className={`activity-btn ${currentActivity?.type === 'breastfeeding' ? 'active' : ''}`}
@@ -457,6 +456,17 @@ function App() {
             </span>
           </button>
         </div>
+
+        {currentActivity && (
+          <div className="active-session">
+            <p>
+              {getActivityIcon(currentActivity.type)} {getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
+            </p>
+            <button className="stop-session-btn" onClick={stopActivity}>
+              Stop {getActivityLabel(currentActivity)}
+            </button>
+          </div>
+        )}
 
         {showDiaperOptions && (
           <div className="diaper-options">
@@ -525,12 +535,11 @@ function App() {
         )}
 
         <div className="activity-log">
-          <h3>Recent Activities (Last 24 Hours)</h3>
-          {recentActivities.length === 0 ? (
-            <p>No recent activities</p>
-          ) : (
-            <ul>
-              {recentActivities.slice(0, 10).map(activity => (
+          {todayActivities.length > 0 && (
+            <>
+              <h3>Today</h3>
+              <ul>
+                {todayActivities.slice(0, 10).map(activity => (
                 <li key={activity.id}>
                   <div
                     className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
@@ -684,8 +693,157 @@ function App() {
                   )}
                   </div>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+            </>
+          )}
+          
+          {yesterdayActivities.length > 0 && (
+            <>
+              <h3>Yesterday</h3>
+              <ul>
+                {yesterdayActivities.slice(0, 10).map(activity => (
+                <li key={activity.id}>
+                  <div
+                    className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                    style={{
+                      transform: getSwipeTransform(activity.id),
+                      opacity: getSwipeOpacity(activity.id),
+                      backgroundColor: getSwipeBackgroundColor(activity.id),
+                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                                 slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
+                                 'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
+                    }}
+                    onTouchStart={(e) => handleTouchStart(e, activity.id)}
+                    onTouchMove={(e) => handleTouchMove(e, activity.id)}
+                    onTouchEnd={() => handleTouchEnd(activity.id)}
+                  >
+                  {editingActivity === activity.id ? (
+                    <div className="edit-activity">
+                      <div className="edit-row">
+                        <label>Start Time:</label>
+                        <input
+                          type="time"
+                          value={formatTimeForInput(activity.startTime)}
+                          onChange={(e) => {
+                            const newStartTime = parseTimeFromInput(e.target.value)
+                            updateActivity(activity.id, { startTime: newStartTime })
+                          }}
+                        />
+                      </div>
+                      {activity.endTime && (
+                        <div className="edit-row">
+                          <label>End Time:</label>
+                          <input
+                            type="time"
+                            value={formatTimeForInput(activity.endTime)}
+                            onChange={(e) => {
+                              const newEndTime = parseTimeFromInput(e.target.value)
+                              updateActivity(activity.id, { endTime: newEndTime })
+                            }}
+                          />
+                        </div>
+                      )}
+                      {activity.type === 'breastfeeding' && (
+                        <div className="edit-row">
+                          <label>Type:</label>
+                          <select
+                            value={activity.feedingType || 'left'}
+                            onChange={(e) => {
+                              updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                            }}
+                          >
+                            <option value="left">Left Breast</option>
+                            <option value="right">Right Breast</option>
+                            <option value="bottle">Bottle</option>
+                          </select>
+                        </div>
+                      )}
+                      {activity.type === 'diaper' && (
+                        <div className="edit-row">
+                          <label>Type:</label>
+                          <select
+                            value={activity.diaperType || 'pee'}
+                            onChange={(e) => {
+                              updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                            }}
+                          >
+                            <option value="pee">Pee</option>
+                            <option value="poo">Poo</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </div>
+                      )}
+                      <div className="edit-row">
+                        <label>Notes:</label>
+                        <input
+                          type="text"
+                          value={activity.notes || ''}
+                          placeholder="Add notes..."
+                          onChange={(e) => {
+                            updateActivity(activity.id, { notes: e.target.value })
+                          }}
+                        />
+                      </div>
+                      <div className="edit-actions">
+                        <button 
+                          className="save-btn"
+                          onClick={() => setEditingActivity(null)}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="activity-type">
+                        <span 
+                          className="activity-icon-container"
+                          style={{
+                            transform: `scale(${getDeleteIconScale(activity.id)})`,
+                            transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                          }}
+                        >
+                          {shouldShowDeleteIcon(activity.id) ? '🗑️' : getActivityIcon(activity.type)}
+                        </span>
+                        {' '}
+                        {getActivityLabel(activity)}
+                      </span>
+                      <div className="activity-info">
+                        <span className="activity-time">
+                          {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                            <>
+                              {formatTime(activity.startTime)}
+                              {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                              {activity.endTime && (
+                                <span className="duration">
+                                  ({formatDuration(activity.startTime, activity.endTime)})
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            formatTime(activity.startTime)
+                          )}
+                        </span>
+                        <button 
+                          className="edit-btn"
+                          onClick={() => setEditingActivity(activity.id)}
+                          title="Edit activity"
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                    </>
+                  )}
+                  </div>
+                </li>
+                ))}
+              </ul>
+            </>
+          )}
+          
+          {todayActivities.length === 0 && yesterdayActivities.length === 0 && (
+            <p>No recent activities</p>
           )}
         </div>
 
