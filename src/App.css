@@ -163,6 +163,7 @@
 
 .activity-btn:nth-child(1) {
   border-color: var(--accent-feeding-text);
+  color: var(--accent-feeding-text);
 }
 
 .activity-btn:nth-child(1):hover {
@@ -172,6 +173,7 @@
 
 .activity-btn:nth-child(2) {
   border-color: var(--accent-burping-text);
+  color: var(--accent-burping-text);
 }
 
 .activity-btn:nth-child(2):hover {
@@ -181,6 +183,7 @@
 
 .activity-btn:nth-child(3) {
   border-color: var(--accent-diaper-text);
+  color: var(--accent-diaper-text);
 }
 
 .activity-btn:nth-child(3):hover {
@@ -190,6 +193,7 @@
 
 .activity-btn:nth-child(4) {
   border-color: var(--accent-sleep-text);
+  color: var(--accent-sleep-text);
 }
 
 .activity-btn:nth-child(4):hover {
@@ -199,6 +203,7 @@
 
 .activity-icon {
   font-size: 2rem;
+  color: inherit;
 }
 
 .activity-label {
@@ -414,30 +419,30 @@
 }
 
 .diaper-type-btn.pee {
-  border-color: #4fc3f7;
-  color: #0277bd;
+  border-color: #7fb8d4;
+  color: #4a7a94;
 }
 
 .diaper-type-btn.pee:hover {
-  background: #e1f5fe;
+  background: #f0f6f9;
 }
 
 .diaper-type-btn.poo {
-  border-color: #8d6e63;
-  color: #5d4037;
+  border-color: #a89b8d;
+  color: #6b5f56;
 }
 
 .diaper-type-btn.poo:hover {
-  background: #efebe9;
+  background: #f3f1ef;
 }
 
 .diaper-type-btn.both {
-  border-color: #ff9800;
-  color: #e65100;
+  border-color: #c0a584;
+  color: #8b7a5a;
 }
 
 .diaper-type-btn.both:hover {
-  background: #fff3e0;
+  background: #f4f2ef;
 }
 
 .cancel-diaper-btn {
@@ -504,30 +509,30 @@
 }
 
 .feeding-type-btn.left {
-  border-color: #e91e63;
-  color: #ad1457;
+  border-color: #c084a1;
+  color: #8b5a6b;
 }
 
 .feeding-type-btn.left:hover {
-  background: #fce4ec;
+  background: #f4eff1;
 }
 
 .feeding-type-btn.right {
-  border-color: #9c27b0;
-  color: #6a1b9a;
+  border-color: #a084c0;
+  color: #6b5a8b;
 }
 
 .feeding-type-btn.right:hover {
-  background: #f3e5f5;
+  background: #f1eff4;
 }
 
 .feeding-type-btn.bottle {
-  border-color: #2196f3;
-  color: #1565c0;
+  border-color: #84a9c0;
+  color: #5a748b;
 }
 
 .feeding-type-btn.bottle:hover {
-  background: #e3f2fd;
+  background: #eff2f4;
 }
 
 .cancel-feeding-btn {
