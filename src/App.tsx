@@ -482,18 +482,20 @@ function App() {
           <div className="feeding-options">
             <h3>What type of feeding?</h3>
             <div className="feeding-buttons">
-              <button 
-                className="feeding-type-btn left"
-                onClick={() => startActivity('breastfeeding', 'left')}
-              >
-                <TbArrowBigLeft size={20} /> Left Breast
-              </button>
-              <button 
-                className="feeding-type-btn right"
-                onClick={() => startActivity('breastfeeding', 'right')}
-              >
-                <TbArrowBigRight size={20} /> Right Breast
-              </button>
+              <div className="breast-buttons">
+                <button 
+                  className="feeding-type-btn left"
+                  onClick={() => startActivity('breastfeeding', 'left')}
+                >
+                  <TbArrowBigLeft size={20} /> Left Breast
+                </button>
+                <button 
+                  className="feeding-type-btn right"
+                  onClick={() => startActivity('breastfeeding', 'right')}
+                >
+                  <TbArrowBigRight size={20} /> Right Breast
+                </button>
+              </div>
               <button 
                 className="feeding-type-btn bottle"
                 onClick={() => startActivity('breastfeeding', 'bottle')}
