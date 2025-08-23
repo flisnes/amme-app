@@ -377,7 +377,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Baby Tracker</h1>
+        <h1>MamaLog</h1>
         <button 
           className="theme-toggle"
           onClick={() => setIsDarkMode(!isDarkMode)}

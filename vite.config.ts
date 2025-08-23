@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Baby Tracker',
-        short_name: 'BabyTracker',
+        name: 'MamaLog',
+        short_name: 'MamaLog',
         description: 'Track breastfeeding, sleeping, and diaper changes',
         theme_color: '#ffffff',
         background_color: '#ffffff',
