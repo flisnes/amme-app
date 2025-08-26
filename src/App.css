@@ -9,8 +9,8 @@
   
   --accent-feeding: #e8f5e8;
   --accent-feeding-text: #2d5f2d;
-  --accent-burping: #fff4e6;
-  --accent-burping-text: #8b4513;
+  --accent-orange: #fff4e6;
+  --accent-orange-text: #8b4513;
   --accent-diaper: #e6f3ff;
   --accent-diaper-text: #1e3a8a;
   --accent-sleep: #f3e8ff;
@@ -33,8 +33,8 @@
   
   --accent-feeding: #2d4a2d;
   --accent-feeding-text: #a8d4a8;
-  --accent-burping: #4a3829;
-  --accent-burping-text: #deb887;
+  --accent-orange: #4a3829;
+  --accent-orange-text: #deb887;
   --accent-diaper: #1e3a5f;
   --accent-diaper-text: #87ceeb;
   --accent-sleep: #3d2a5f;
@@ -172,13 +172,13 @@
 }
 
 .activity-btn:nth-child(2) {
-  border-color: var(--accent-burping-text);
-  color: var(--accent-burping-text);
+  border-color: var(--accent-orange-text);
+  color: var(--accent-orange-text);
 }
 
 .activity-btn:nth-child(2):hover {
-  background: var(--accent-burping);
-  color: var(--accent-burping-text);
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
 }
 
 .activity-btn:nth-child(3) {
@@ -301,8 +301,8 @@
 }
 
 .delete-btn:hover {
-  background: var(--accent-burping);
-  color: var(--accent-burping-text);
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
 }
 
 .edit-form {
@@ -378,8 +378,8 @@
 }
 
 .cancel-btn:hover {
-  background: var(--accent-burping);
-  color: var(--accent-burping-text);
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
 }
 
 .diaper-options {
@@ -432,13 +432,13 @@
 }
 
 .diaper-type-btn.poo {
-  border-color: var(--accent-burping-text);
+  border-color: var(--accent-orange-text);
   color: var(--text-primary);
 }
 
 .diaper-type-btn.poo:hover {
-  background: var(--accent-burping);
-  color: var(--accent-burping-text);
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
 }
 
 .diaper-type-btn.both {
@@ -462,8 +462,8 @@
 }
 
 .cancel-diaper-btn:hover {
-  background: var(--accent-burping);
-  color: var(--accent-burping-text);
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
 }
 
 .feeding-options {
@@ -555,8 +555,8 @@
 }
 
 .cancel-feeding-btn:hover {
-  background: var(--accent-burping);
-  color: var(--accent-burping-text);
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
 }
 
 .historical-log {
