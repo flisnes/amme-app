@@ -231,7 +231,7 @@ function App() {
   }
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
   }
 
   const formatDuration = (start: Date, end: Date) => {
@@ -359,11 +359,34 @@ function App() {
   }
 
   const formatTimeForInput = (date: Date) => {
-    return date.toISOString().slice(0, 16)
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM) in local timezone
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`
   }
 
   const parseTimeFromInput = (timeString: string) => {
+    // Parse datetime-local input as local time
     return new Date(timeString)
+  }
+  
+  const formatTimeOnlyForInput = (date: Date) => {
+    // Format for time input (HH:MM) in local timezone
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
+  }
+  
+  const parseTimeOnlyFromInput = (timeString: string, baseDate: Date) => {
+    // Parse time-only input and combine with existing date
+    const [hours, minutes] = timeString.split(':').map(Number)
+    const newDate = new Date(baseDate)
+    newDate.setHours(hours, minutes, 0, 0)
+    return newDate
   }
 
   const handleTouchStart = (e: React.TouchEvent, activityId: string) => {
@@ -878,9 +901,9 @@ function App() {
                         <label>Start Time:</label>
                         <input
                           type="time"
-                          value={formatTimeForInput(activity.startTime)}
+                          value={formatTimeOnlyForInput(activity.startTime)}
                           onChange={(e) => {
-                            const newStartTime = parseTimeFromInput(e.target.value)
+                            const newStartTime = parseTimeOnlyFromInput(e.target.value, activity.startTime)
                             updateActivity(activity.id, { startTime: newStartTime })
                           }}
                         />
@@ -890,9 +913,9 @@ function App() {
                           <label>End Time:</label>
                           <input
                             type="time"
-                            value={formatTimeForInput(activity.endTime)}
+                            value={formatTimeOnlyForInput(activity.endTime)}
                             onChange={(e) => {
-                              const newEndTime = parseTimeFromInput(e.target.value)
+                              const newEndTime = parseTimeOnlyFromInput(e.target.value, activity.endTime)
                               updateActivity(activity.id, { endTime: newEndTime })
                             }}
                           />
