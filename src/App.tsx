@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -686,7 +686,7 @@ function App() {
                           onClick={() => setEditingActivity(activity.id)}
                           title="Edit activity"
                         >
-                          ✏️
+                          <TbEdit />
                         </button>
                       </div>
                     </>
@@ -830,7 +830,7 @@ function App() {
                           onClick={() => setEditingActivity(activity.id)}
                           title="Edit activity"
                         >
-                          ✏️
+                          <TbEdit />
                         </button>
                       </div>
                     </>
@@ -1014,7 +1014,7 @@ function App() {
                                   onClick={() => setEditingActivity(activity.id)}
                                   title="Edit activity"
                                 >
-                                  ✏️
+                                  <TbEdit />
                                 </button>
                               </div>
                             </>
