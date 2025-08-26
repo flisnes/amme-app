@@ -19,7 +19,7 @@ function App() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
-  const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; currentX: number; isDragging: boolean }>>({})
+  const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [showDiaperOptions, setShowDiaperOptions] = useState(false)
   const [showFeedingOptions, setShowFeedingOptions] = useState(false)
@@ -239,8 +239,11 @@ function App() {
       ...prev,
       [activityId]: {
         startX: touch.clientX,
+        startY: touch.clientY,
         currentX: touch.clientX,
-        isDragging: true
+        currentY: touch.clientY,
+        isDragging: true,
+        isActive: false
       }
     }))
   }
@@ -250,11 +253,20 @@ function App() {
     const swipeState = swipeStates[activityId]
     
     if (swipeState?.isDragging) {
+      const horizontalDistance = touch.clientX - swipeState.startX
+      const verticalDistance = Math.abs(touch.clientY - swipeState.startY)
+      const threshold = 30
+      
+      // Only activate if moving mostly horizontally (not vertical scrolling)
+      const isHorizontalGesture = horizontalDistance > threshold && verticalDistance < threshold * 2
+      
       setSwipeStates(prev => ({
         ...prev,
         [activityId]: {
           ...swipeState,
-          currentX: touch.clientX
+          currentX: touch.clientX,
+          currentY: touch.clientY,
+          isActive: isHorizontalGesture && horizontalDistance > 0
         }
       }))
     }
@@ -265,9 +277,9 @@ function App() {
     
     if (swipeState?.isDragging) {
       const swipeDistance = swipeState.currentX - swipeState.startX
-      const swipeThreshold = window.innerWidth * 0.6 // 3/5 of screen width
+      const swipeThreshold = window.innerWidth * 0.4 // 2/5 of screen width - easier to trigger
       
-      if (swipeDistance > swipeThreshold) {
+      if (swipeDistance > swipeThreshold && swipeState.isActive) {
         // Start slide-out animation
         setSlidingOutItems(prev => new Set(prev).add(activityId))
         
@@ -299,18 +311,21 @@ function App() {
       return `translateX(${window.innerWidth}px)`
     }
     
-    if (swipeState?.isDragging) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
-      return `translateX(${distance}px)`
+    if (swipeState?.isDragging && swipeState.isActive) {
+      // Start movement from 0 when threshold is crossed, not from finger position
+      const totalDistance = swipeState.currentX - swipeState.startX
+      const threshold = 30
+      const movementDistance = Math.max(0, totalDistance - threshold)
+      return `translateX(${movementDistance}px)`
     }
     return 'translateX(0px)'
   }
 
   const getSwipeOpacity = (activityId: string) => {
     const swipeState = swipeStates[activityId]
-    if (swipeState?.isDragging) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
-      const opacity = Math.max(0.3, 1 - (distance / 200))
+    if (swipeState?.isDragging && swipeState.isActive) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX - 30) // Subtract threshold
+      const opacity = Math.max(0.4, 1 - (distance / 170)) // Smoother fade
       return opacity
     }
     return 1
@@ -318,35 +333,20 @@ function App() {
 
   const getSwipeBackgroundColor = (activityId: string) => {
     const swipeState = swipeStates[activityId]
-    if (swipeState?.isDragging) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
-      const intensity = Math.min(1, distance / 150) // Fully red at 150px
-      const red = Math.floor(255 * intensity)
-      const green = Math.floor(255 * (1 - intensity * 0.8)) // Keep some green initially
-      const blue = Math.floor(255 * (1 - intensity * 0.8))
-      return `rgb(${red}, ${green}, ${blue})`
+    if (swipeState?.isDragging && swipeState.isActive) {
+      const distance = Math.max(0, swipeState.currentX - swipeState.startX - 30) // Subtract threshold
+      const intensity = Math.min(1, distance / 120) // Fully red at 150px total (120px after threshold)
+      
+      // Clean transition: transparent → light red → dark red
+      const alpha = Math.min(0.8, intensity * 1.2) // Max 80% opacity
+      const red = Math.floor(220 + (35 * intensity)) // From light red (220) to dark red (255)
+      
+      return `rgba(${red}, 60, 60, ${alpha})`
     }
     return ''
   }
 
-  const getDeleteIconScale = (activityId: string) => {
-    const swipeState = swipeStates[activityId]
-    if (swipeState?.isDragging) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
-      const scale = Math.min(2, 1 + (distance / 100)) // Scale from 1x to 2x over 100px
-      return scale
-    }
-    return 1
-  }
 
-  const shouldShowDeleteIcon = (activityId: string) => {
-    const swipeState = swipeStates[activityId]
-    if (swipeState?.isDragging) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX)
-      return distance > 20 // Show delete icon after 20px swipe
-    }
-    return false
-  }
 
   const isToday = (date: Date) => {
     const today = new Date()
@@ -656,11 +656,11 @@ function App() {
                         <span 
                           className="activity-icon-container"
                           style={{
-                            transform: `scale(${getDeleteIconScale(activity.id)})`,
+                            transform: `scale(1)`,
                             transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
                           }}
                         >
-                          {shouldShowDeleteIcon(activity.id) ? <TbTrash /> : getActivityIcon(activity.type)}
+                          {getActivityIcon(activity.type)}
                         </span>
                         {' '}
                         {getActivityLabel(activity)}
@@ -807,11 +807,11 @@ function App() {
                         <span 
                           className="activity-icon-container"
                           style={{
-                            transform: `scale(${getDeleteIconScale(activity.id)})`,
+                            transform: `scale(1)`,
                             transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
                           }}
                         >
-                          {shouldShowDeleteIcon(activity.id) ? <TbTrash /> : getActivityIcon(activity.type)}
+                          {getActivityIcon(activity.type)}
                         </span>
                         {' '}
                         {getActivityLabel(activity)}
@@ -991,11 +991,11 @@ function App() {
                                 <span 
                                   className="activity-icon-container"
                                   style={{
-                                    transform: `scale(${getDeleteIconScale(activity.id)})`,
+                                    transform: `scale(1)`,
                                     transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
                                   }}
                                 >
-                                  {shouldShowDeleteIcon(activity.id) ? <TbTrash /> : getActivityIcon(activity.type)}
+                                  {getActivityIcon(activity.type)}
                                 </span>
                                 {' '}
                                 {getActivityLabel(activity)}
