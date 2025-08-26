@@ -677,6 +677,11 @@
   animation: gentle-pulse 3s ease-in-out infinite;
 }
 
+.activity-icon-animated.feeding {
+  animation: bottle-sway 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
 @keyframes gentle-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -752,6 +757,78 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   display: inline-block;
+}
+
+.duration-display.feeding-duration {
+  color: var(--accent-feeding-text);
+  background: var(--accent-feeding);
+}
+
+@keyframes bottle-sway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+}
+
+.milk-drop {
+  position: absolute;
+  font-size: 0.6rem;
+  color: var(--accent-feeding-text);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.milk-drop.drop1 {
+  left: 8px;
+  top: 15px;
+  animation: milk-drip 4s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.milk-drop.drop2 {
+  left: 12px;
+  top: 18px;
+  animation: milk-drip 4s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+.milk-drop.drop3 {
+  left: 6px;
+  top: 16px;
+  animation: milk-drip 4s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+@keyframes milk-drip {
+  0% {
+    opacity: 0;
+    transform: translateY(0px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(2px);
+  }
+  30% {
+    opacity: 0.8;
+    transform: translateY(8px);
+  }
+  60% {
+    opacity: 0.4;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
 }
 
 @media (max-width: 768px) {

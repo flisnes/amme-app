@@ -517,7 +517,7 @@ function App() {
         {currentActivity && (
           <div className="active-session">
             <p>
-              <span className={`activity-icon-animated ${currentActivity.type === 'sleep' ? 'sleeping' : ''}`}>
+              <span className={`activity-icon-animated ${currentActivity.type === 'sleep' ? 'sleeping' : currentActivity.type === 'breastfeeding' ? 'feeding' : ''}`}>
                 {getActivityIcon(currentActivity.type)}
                 {currentActivity.type === 'sleep' && (
                   <>
@@ -526,11 +526,18 @@ function App() {
                     <span className="floating-z z3">Z</span>
                   </>
                 )}
+                {currentActivity.type === 'breastfeeding' && (
+                  <>
+                    <span className="milk-drop drop1">•</span>
+                    <span className="milk-drop drop2">•</span>
+                    <span className="milk-drop drop3">•</span>
+                  </>
+                )}
               </span>
               {' '}{getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
             </p>
-            {currentActivity.type === 'sleep' && (
-              <div className="duration-display">
+            {(currentActivity.type === 'sleep' || currentActivity.type === 'breastfeeding') && (
+              <div className={`duration-display ${currentActivity.type === 'breastfeeding' ? 'feeding-duration' : ''}`}>
                 {formatLiveDuration(currentActivity.startTime)}
               </div>
             )}
