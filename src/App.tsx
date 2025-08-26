@@ -21,10 +21,9 @@ function App() {
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
-  const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: NodeJS.Timeout} | null>(null)
+  const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
   const feedingIconRef = useRef<HTMLSpanElement>(null)
-  const [dropCounter, setDropCounter] = useState(0)
   
   // Update current time every second for live duration
   useEffect(() => {
@@ -34,6 +33,7 @@ function App() {
     
     return () => clearInterval(timer)
   }, [])
+  
   
   // Feeding animation: spawn drops when bottle changes direction
   useEffect(() => {
@@ -77,15 +77,15 @@ function App() {
     
     // Spawn drops synchronized with bottle direction changes
     // The bottle animation: 0s = left extreme, 2.4s = right extreme, 4.8s = left extreme
-    let timeoutId: NodeJS.Timeout
+    let timeoutId: number
     
     const scheduleNextDrop = (isInitial = true) => {
       if (isInitial) {
         // Start at left extreme (0s), spawn left drops
-        timeoutId = setTimeout(() => {
+        timeoutId = window.setTimeout(() => {
           spawnDrops('left')
           // Next: right extreme at 2.4s
-          timeoutId = setTimeout(() => {
+          timeoutId = window.setTimeout(() => {
             spawnDrops('right')
             // Schedule the repeating pattern
             scheduleNextDrop(false)
@@ -93,9 +93,9 @@ function App() {
         }, 100) // Small delay to let animation start
       } else {
         // Repeating: left at 4.8s (2.4s after last), right at 7.2s (2.4s after that)
-        timeoutId = setTimeout(() => {
+        timeoutId = window.setTimeout(() => {
           spawnDrops('left')
-          timeoutId = setTimeout(() => {
+          timeoutId = window.setTimeout(() => {
             spawnDrops('right')
             scheduleNextDrop(false)
           }, 2400)
@@ -106,7 +106,7 @@ function App() {
     scheduleNextDrop()
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId)
+      if (timeoutId) window.clearTimeout(timeoutId)
     }
   }, [currentActivity?.type])
   const [showDiaperOptions, setShowDiaperOptions] = useState(false)
@@ -242,8 +242,7 @@ function App() {
   }
   
   const formatLiveDuration = (startTime: Date) => {
-    const now = new Date()
-    const diffMs = now.getTime() - startTime.getTime()
+    const diffMs = currentTime.getTime() - startTime.getTime()
     const hours = Math.floor(diffMs / (1000 * 60 * 60))
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
     const seconds = Math.floor((diffMs % (1000 * 60)) / 1000)
