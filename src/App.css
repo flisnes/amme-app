@@ -290,16 +290,19 @@
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
   font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
 .edit-btn:hover {
   background: var(--accent-diaper);
+  color: var(--accent-diaper-text);
 }
 
 .delete-btn:hover {
   background: var(--accent-burping);
+  color: var(--accent-burping-text);
 }
 
 .edit-form {
@@ -419,30 +422,33 @@
 }
 
 .diaper-type-btn.pee {
-  border-color: #7fb8d4;
-  color: #4a7a94;
+  border-color: var(--accent-diaper-text);
+  color: var(--text-primary);
 }
 
 .diaper-type-btn.pee:hover {
-  background: #f0f6f9;
+  background: var(--accent-diaper);
+  color: var(--accent-diaper-text);
 }
 
 .diaper-type-btn.poo {
-  border-color: #a89b8d;
-  color: #6b5f56;
+  border-color: var(--accent-burping-text);
+  color: var(--text-primary);
 }
 
 .diaper-type-btn.poo:hover {
-  background: #f3f1ef;
+  background: var(--accent-burping);
+  color: var(--accent-burping-text);
 }
 
 .diaper-type-btn.both {
-  border-color: #c0a584;
-  color: #8b7a5a;
+  border-color: var(--accent-sleep-text);
+  color: var(--text-primary);
 }
 
 .diaper-type-btn.both:hover {
-  background: #f4f2ef;
+  background: var(--accent-sleep);
+  color: var(--accent-sleep-text);
 }
 
 .cancel-diaper-btn {
@@ -509,30 +515,33 @@
 }
 
 .feeding-type-btn.left {
-  border-color: #c084a1;
-  color: #8b5a6b;
+  border-color: var(--accent-feeding-text);
+  color: var(--text-primary);
 }
 
 .feeding-type-btn.left:hover {
-  background: #f4eff1;
+  background: var(--accent-feeding);
+  color: var(--accent-feeding-text);
 }
 
 .feeding-type-btn.right {
-  border-color: #a084c0;
-  color: #6b5a8b;
+  border-color: var(--accent-sleep-text);
+  color: var(--text-primary);
 }
 
 .feeding-type-btn.right:hover {
-  background: #f1eff4;
+  background: var(--accent-sleep);
+  color: var(--accent-sleep-text);
 }
 
 .feeding-type-btn.bottle {
-  border-color: #84a9c0;
-  color: #5a748b;
+  border-color: var(--accent-diaper-text);
+  color: var(--text-primary);
 }
 
 .feeding-type-btn.bottle:hover {
-  background: #eff2f4;
+  background: var(--accent-diaper);
+  color: var(--accent-diaper-text);
 }
 
 .cancel-feeding-btn {
