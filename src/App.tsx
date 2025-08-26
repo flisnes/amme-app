@@ -792,6 +792,13 @@ function App() {
                         >
                           Save
                         </button>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => deleteActivity(activity.id)}
+                          title="Delete activity"
+                        >
+                          <TbTrash />
+                        </button>
                       </div>
                     </div>
                   ) : (
