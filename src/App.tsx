@@ -22,6 +22,16 @@ function App() {
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: NodeJS.Timeout} | null>(null)
+  const [currentTime, setCurrentTime] = useState(new Date())
+  
+  // Update current time every second for live duration
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    
+    return () => clearInterval(timer)
+  }, [])
   const [showDiaperOptions, setShowDiaperOptions] = useState(false)
   const [showFeedingOptions, setShowFeedingOptions] = useState(false)
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
@@ -152,6 +162,16 @@ function App() {
     const minutes = Math.floor(diff / 60000)
     const seconds = Math.floor((diff % 60000) / 1000)
     return `${minutes}m ${seconds}s`
+  }
+  
+  const formatLiveDuration = (startTime: Date) => {
+    const now = new Date()
+    const diffMs = now.getTime() - startTime.getTime()
+    const hours = Math.floor(diffMs / (1000 * 60 * 60))
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000)
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }
 
   const getActivityIcon = (type: ActivityType) => {
@@ -497,8 +517,23 @@ function App() {
         {currentActivity && (
           <div className="active-session">
             <p>
-              {getActivityIcon(currentActivity.type)} {getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
+              <span className={`activity-icon-animated ${currentActivity.type === 'sleep' ? 'sleeping' : ''}`}>
+                {getActivityIcon(currentActivity.type)}
+                {currentActivity.type === 'sleep' && (
+                  <>
+                    <span className="floating-z z1">z</span>
+                    <span className="floating-z z2">z</span>
+                    <span className="floating-z z3">Z</span>
+                  </>
+                )}
+              </span>
+              {' '}{getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
             </p>
+            {currentActivity.type === 'sleep' && (
+              <div className="duration-display">
+                {formatLiveDuration(currentActivity.startTime)}
+              </div>
+            )}
             <button className="stop-session-btn" onClick={stopActivity}>
               Stop {getActivityLabel(currentActivity)}
             </button>
