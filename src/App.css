@@ -678,8 +678,9 @@
 }
 
 .activity-icon-animated.feeding {
-  animation: bottle-sway 4s ease-in-out infinite;
-  transform-origin: bottom center;
+  position: relative;
+  animation: bottle-sway 2.4s ease-in-out infinite alternate;
+  transform-origin: 50% 100%;
 }
 
 @keyframes gentle-pulse {
@@ -765,71 +766,55 @@
 }
 
 @keyframes bottle-sway {
-  0%, 100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-8deg);
-  }
-  50% {
-    transform: rotate(0deg);
-  }
-  75% {
-    transform: rotate(8deg);
-  }
+  0%   { transform: rotate(-18deg); }
+  100% { transform: rotate(18deg); }
+}
+
+.feeding-emitter {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }
 
 .milk-drop {
   position: absolute;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--accent-feeding-text);
   pointer-events: none;
+  will-change: offset-distance, transform, opacity;
+  offset-rotate: auto;
+  animation: milk-fly linear forwards;
   opacity: 0;
 }
 
-.milk-drop.drop1 {
-  left: 8px;
-  top: 15px;
-  animation: milk-drip 4s ease-in-out infinite;
-  animation-delay: 1s;
+.milk-drop.left {
+  offset-path: path("M 0 0 C -20 -12, -35 -3, -55 35");
 }
 
-.milk-drop.drop2 {
-  left: 12px;
-  top: 18px;
-  animation: milk-drip 4s ease-in-out infinite;
-  animation-delay: 3s;
+.milk-drop.right {
+  offset-path: path("M 0 0 C 20 -12, 35 -3, 55 35");
 }
 
-.milk-drop.drop3 {
-  left: 6px;
-  top: 16px;
-  animation: milk-drip 4s ease-in-out infinite;
-  animation-delay: 2s;
-}
-
-@keyframes milk-drip {
+@keyframes milk-fly {
   0% {
-    opacity: 0;
-    transform: translateY(0px);
-  }
-  10% {
     opacity: 1;
-    transform: translateY(2px);
+    offset-distance: 0%;
+    transform: scale(1);
   }
-  30% {
-    opacity: 0.8;
-    transform: translateY(8px);
-  }
-  60% {
-    opacity: 0.4;
-    transform: translateY(16px);
+  85% {
+    opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateY(25px);
+    offset-distance: 100%;
+    transform: scale(0.8);
   }
 }
+
 
 @media (max-width: 768px) {
   .button-grid {
