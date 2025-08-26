@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -566,7 +566,7 @@ function App() {
                           onClick={() => deleteActivity(activity.id)}
                           title="Delete activity"
                         >
-                          🗑️
+                          <TbTrash />
                         </button>
                       </div>
                       <div className="edit-row">
@@ -660,7 +660,7 @@ function App() {
                             transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
                           }}
                         >
-                          {shouldShowDeleteIcon(activity.id) ? '🗑️' : getActivityIcon(activity.type)}
+                          {shouldShowDeleteIcon(activity.id) ? <TbTrash /> : getActivityIcon(activity.type)}
                         </span>
                         {' '}
                         {getActivityLabel(activity)}
@@ -804,7 +804,7 @@ function App() {
                             transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
                           }}
                         >
-                          {shouldShowDeleteIcon(activity.id) ? '🗑️' : getActivityIcon(activity.type)}
+                          {shouldShowDeleteIcon(activity.id) ? <TbTrash /> : getActivityIcon(activity.type)}
                         </span>
                         {' '}
                         {getActivityLabel(activity)}
@@ -894,7 +894,7 @@ function App() {
                                   onClick={() => deleteActivity(activity.id)}
                                   title="Delete activity"
                                 >
-                                  🗑️
+                                  <TbTrash />
                                 </button>
                               </div>
                               <div className="edit-row">
@@ -988,7 +988,7 @@ function App() {
                                     transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
                                   }}
                                 >
-                                  {shouldShowDeleteIcon(activity.id) ? '🗑️' : getActivityIcon(activity.type)}
+                                  {shouldShowDeleteIcon(activity.id) ? <TbTrash /> : getActivityIcon(activity.type)}
                                 </span>
                                 {' '}
                                 {getActivityLabel(activity)}
