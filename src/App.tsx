@@ -21,6 +21,7 @@ function App() {
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
+  const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: NodeJS.Timeout} | null>(null)
   const [showDiaperOptions, setShowDiaperOptions] = useState(false)
   const [showFeedingOptions, setShowFeedingOptions] = useState(false)
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
@@ -210,7 +211,43 @@ function App() {
   }
 
   const deleteActivity = (id: string) => {
+    const activityToDelete = activities.find(activity => activity.id === id)
+    if (!activityToDelete) return
+    
+    // Remove from activities list
     setActivities(prev => prev.filter(activity => activity.id !== id))
+    
+    // Clear any existing undo timeout
+    if (recentlyDeleted?.timeoutId) {
+      clearTimeout(recentlyDeleted.timeoutId)
+    }
+    
+    // Set up new undo timeout (5 seconds)
+    const timeoutId = setTimeout(() => {
+      setRecentlyDeleted(null)
+    }, 5000)
+    
+    setRecentlyDeleted({
+      activity: activityToDelete,
+      timeoutId
+    })
+  }
+  
+  const undoDelete = () => {
+    if (!recentlyDeleted) return
+    
+    // Clear the timeout
+    clearTimeout(recentlyDeleted.timeoutId)
+    
+    // Restore the activity
+    setActivities(prev => {
+      const restored = [...prev, recentlyDeleted.activity]
+      // Sort by startTime to maintain chronological order
+      return restored.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+    })
+    
+    // Clear the recently deleted state
+    setRecentlyDeleted(null)
   }
 
   const updateActivity = (id: string, updates: Partial<Activity>) => {
@@ -1036,6 +1073,19 @@ function App() {
           </div>
         )}
       </main>
+      
+      {/* Undo Toast */}
+      {recentlyDeleted && (
+        <div className="undo-toast">
+          <span>Activity deleted</span>
+          <button 
+            className="undo-btn"
+            onClick={undoDelete}
+          >
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   )
 }
