@@ -921,7 +921,7 @@ function App() {
                             type="time"
                             value={formatTimeOnlyForInput(activity.endTime)}
                             onChange={(e) => {
-                              const newEndTime = parseTimeOnlyFromInput(e.target.value, activity.endTime)
+                              const newEndTime = parseTimeOnlyFromInput(e.target.value, activity.endTime!)
                               updateActivity(activity.id, { endTime: newEndTime })
                             }}
                           />
