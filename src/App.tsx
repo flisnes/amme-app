@@ -29,6 +29,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [currentView, setCurrentView] = useState<'activities' | 'calendar'>('activities')
   const [calendarDate, setCalendarDate] = useState(new Date())
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [mainViewSwipe, setMainViewSwipe] = useState<{startX: number, startY: number, currentX: number, currentY: number, isDragging: boolean}>({ startX: 0, startY: 0, currentX: 0, currentY: 0, isDragging: false })
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
@@ -803,6 +804,26 @@ function App() {
       return `${minutes}m`
     } else {
       return '0m'
+    }
+  }
+
+  // Get activities for a specific day
+  const getActivitiesForDay = (date: Date) => {
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    return activities.filter(activity => {
+      const activityDate = new Date(activity.startTime)
+      return activityDate >= startOfDay && activityDate <= endOfDay
+    }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+  }
+
+  // Handle calendar day click
+  const handleDayClick = (day: Date, isCurrentMonth: boolean, hasActivities: boolean) => {
+    if (isCurrentMonth && hasActivities) {
+      setSelectedDay(day)
     }
   }
 
@@ -1707,7 +1728,8 @@ function App() {
                   return (
                     <div 
                       key={index} 
-                      className={`calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''} ${hasActivities ? 'has-activities' : ''}`}
+                      className={`calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''} ${hasActivities ? 'has-activities clickable' : ''}`}
+                      onClick={() => handleDayClick(day, isCurrentMonth, hasActivities)}
                     >
                       <div className="day-number">{day.getDate()}</div>
                       {isCurrentMonth && hasActivities && (
@@ -1798,6 +1820,234 @@ function App() {
                 <h3>Version</h3>
                 <p>MamaLog v1.0.0</p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Day Detail Modal */}
+      {selectedDay && (
+        <div className="day-detail-modal" onClick={() => setSelectedDay(null)}>
+          <div className="day-detail-content" onClick={(e) => e.stopPropagation()}>
+            <div className="day-detail-header">
+              <h2>{selectedDay.toLocaleDateString('default', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</h2>
+              <button 
+                className="close-btn"
+                onClick={() => setSelectedDay(null)}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="day-detail-activities">
+              {getActivitiesForDay(selectedDay).map(activity => (
+                <div key={activity.id} className="day-activity-item">
+                  <div
+                    className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                    style={{
+                      transform: getSwipeTransform(activity.id),
+                      opacity: getSwipeOpacity(activity.id),
+                      backgroundColor: getSwipeBackgroundColor(activity.id),
+                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                                 slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
+                                 'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
+                    }}
+                    onTouchStart={(e) => handleTouchStart(e, activity.id)}
+                    onTouchMove={(e) => handleTouchMove(e, activity.id)}
+                    onTouchEnd={() => handleTouchEnd(activity.id)}
+                  >
+                  {editingActivity === activity.id ? (
+                    <div className="edit-form">
+                      <div className="edit-row">
+                        <span className="activity-type">
+                          {getActivityIcon(activity.type)} {getActivityLabel(activity)}
+                        </span>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => deleteActivity(activity.id)}
+                          title="Delete activity"
+                        >
+                          <TbTrash />
+                        </button>
+                      </div>
+                      {(activity.type === 'breastfeeding' || activity.type === 'sleep') && activity.endTime && (
+                        <div className="edit-row">
+                          <label>End:</label>
+                          <input
+                            type="datetime-local"
+                            value={formatTimeForInput(activity.endTime)}
+                            onChange={(e) => {
+                              const newEndTime = parseTimeFromInput(e.target.value)
+                              if (newEndTime < activity.startTime) {
+                                updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                              } else {
+                                updateActivity(activity.id, { endTime: newEndTime })
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="edit-row">
+                        <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
+                        <input
+                          type="datetime-local"
+                          value={formatTimeForInput(activity.startTime)}
+                          onChange={(e) => {
+                            const newStartTime = parseTimeFromInput(e.target.value)
+                            if (activity.endTime && newStartTime > activity.endTime) {
+                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                            } else {
+                              updateActivity(activity.id, { startTime: newStartTime })
+                            }
+                          }}
+                        />
+                      </div>
+                      {activity.type === 'breastfeeding' && (
+                        <div className="edit-row">
+                          <label>Type:</label>
+                          <select
+                            value={activity.feedingType || 'left'}
+                            onChange={(e) => {
+                              updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                            }}
+                          >
+                            <option value="left">Left Breast</option>
+                            <option value="right">Right Breast</option>
+                            <option value="bottle">Bottle</option>
+                          </select>
+                        </div>
+                      )}
+                      {activity.type === 'diaper' && (
+                        <div className="edit-row">
+                          <label>Type:</label>
+                          <select
+                            value={activity.diaperType || 'pee'}
+                            onChange={(e) => {
+                              updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                            }}
+                          >
+                            <option value="pee">Pee</option>
+                            <option value="poo">Poo</option>
+                            <option value="both">Both</option>
+                          </select>
+                        </div>
+                      )}
+                      <div className="edit-actions">
+                        <button 
+                          className="save-btn"
+                          onClick={() => setEditingActivity(null)}
+                        >
+                          Save
+                        </button>
+                        <button 
+                          className="cancel-btn"
+                          onClick={() => setEditingActivity(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="activity-type">
+                        <span 
+                          className="activity-icon-container"
+                          style={{
+                            transform: `scale(1)`,
+                            transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                          }}
+                        >
+                          {getActivityIcon(activity.type)}
+                        </span>
+                        {' '}
+                        {getActivityLabel(activity)}
+                      </span>
+                      <div className="activity-info">
+                        <div className="activity-time-container">
+                          <span className="activity-time">
+                            {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                              <>
+                                {formatTime(activity.startTime)}
+                                {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                                {activity.endTime && (
+                                  <span className="duration">
+                                    ({formatDuration(activity.startTime, activity.endTime)})
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              formatTime(activity.startTime)
+                            )}
+                            {activity.feedingType && (
+                              <span className="activity-subtype"> ({activity.feedingType})</span>
+                            )}
+                            {activity.diaperType && (
+                              <span className="activity-subtype"> ({activity.diaperType})</span>
+                            )}
+                          </span>
+                          
+                          {expandedActivityInfo.has(activity.id) && activity.originalStartTime && (
+                            <div className="original-info">
+                              <span className="original-time">
+                                {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                                  <>
+                                    {formatTime(activity.originalStartTime)}
+                                    {activity.originalEndTime && ` - ${formatTime(activity.originalEndTime)}`}
+                                    {activity.originalEndTime && (
+                                      <span className="duration">
+                                        ({formatDuration(activity.originalStartTime, activity.originalEndTime)})
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  formatTime(activity.originalStartTime)
+                                )}
+                                {activity.originalFeedingType && (
+                                  <span className="activity-subtype"> ({activity.originalFeedingType})</span>
+                                )}
+                                {activity.originalDiaperType && (
+                                  <span className="activity-subtype"> ({activity.originalDiaperType})</span>
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="activity-buttons">
+                          {activity.originalStartTime && (
+                            <button 
+                              className="info-btn"
+                              onClick={() => toggleActivityInfo(activity.id)}
+                              title="View original activity info"
+                            >
+                              <TbInfoCircle />
+                            </button>
+                          )}
+                          <button 
+                            className="edit-btn"
+                            onClick={() => setEditingActivity(activity.id)}
+                            title="Edit activity"
+                          >
+                            <TbEdit />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  </div>
+                </div>
+              ))}
+              
+              {getActivitiesForDay(selectedDay).length === 0 && (
+                <div className="no-activities">
+                  <p>No activities logged for this day.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
