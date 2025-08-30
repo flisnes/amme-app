@@ -1776,8 +1776,10 @@ function App() {
             </div>
             <div className="about-body">
               <p>
-                <strong>MamaLog</strong> is a simple and intuitive baby activity tracker 
-                designed to help parents log feeding, diaper changes, and sleep patterns.
+                <strong>MamaLog</strong> is a simple, privacy-focused baby activity tracker. 
+                It helps parents log feedings, diaper changes, and sleep patterns without collecting 
+                or sharing personal data. All information stays on your device, and you can 
+                choose to export it if you want a backup or to move it to another device.
               </p>
               
               <div className="about-section">
@@ -1790,14 +1792,6 @@ function App() {
                   <li>Export/import data for backup and device sync</li>
                   <li>Dark/light theme support</li>
                 </ul>
-              </div>
-              
-              <div className="about-section">
-                <h3>Data Privacy</h3>
-                <p>
-                  All data is stored locally on your device. No information is sent to external servers. 
-                  Use the export feature to backup your data or transfer between devices.
-                </p>
               </div>
               
               <div className="about-section">
