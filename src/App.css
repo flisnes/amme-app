@@ -886,3 +886,55 @@
     justify-content: center;
   }
 }
+
+/* Original activity info styling */
+.activity-time-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.activity-buttons {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.info-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.info-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+.original-info {
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+}
+
+.original-time {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.original-time .duration {
+  text-decoration: line-through;
+}
+
+.original-time .activity-subtype {
+  text-decoration: line-through;
+}

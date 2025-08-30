@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -12,6 +12,11 @@ interface Activity {
   notes?: string
   diaperType?: 'pee' | 'poo' | 'both'
   feedingType?: 'left' | 'right' | 'bottle'
+  // Original data to track changes
+  originalStartTime?: Date
+  originalEndTime?: Date
+  originalDiaperType?: 'pee' | 'poo' | 'both'
+  originalFeedingType?: 'left' | 'right' | 'bottle'
 }
 
 function App() {
@@ -19,6 +24,7 @@ function App() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
+  const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
@@ -357,9 +363,27 @@ function App() {
 
   const updateActivity = (id: string, updates: Partial<Activity>) => {
     setActivities(prev => {
-      const updatedActivities = prev.map(activity => 
-        activity.id === id ? { ...activity, ...updates } : activity
-      )
+      const updatedActivities = prev.map(activity => {
+        if (activity.id === id) {
+          // Store original values on first edit (if not already stored)
+          const originalData: Partial<Activity> = {}
+          if (!activity.originalStartTime) {
+            originalData.originalStartTime = activity.startTime
+          }
+          if (!activity.originalEndTime && activity.endTime) {
+            originalData.originalEndTime = activity.endTime
+          }
+          if (!activity.originalDiaperType && activity.diaperType) {
+            originalData.originalDiaperType = activity.diaperType
+          }
+          if (!activity.originalFeedingType && activity.feedingType) {
+            originalData.originalFeedingType = activity.feedingType
+          }
+          
+          return { ...activity, ...originalData, ...updates }
+        }
+        return activity
+      })
       
       // Re-sort activities by start time (newest first) to maintain chronological order
       return updatedActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
@@ -560,6 +584,18 @@ function App() {
         newSet.delete(dateKey)
       } else {
         newSet.add(dateKey)
+      }
+      return newSet
+    })
+  }
+
+  const toggleActivityInfo = (activityId: string) => {
+    setExpandedActivityInfo(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(activityId)) {
+        newSet.delete(activityId)
+      } else {
+        newSet.add(activityId)
       }
       return newSet
     })
@@ -844,28 +880,73 @@ function App() {
                         {getActivityLabel(activity)}
                       </span>
                       <div className="activity-info">
-                        <span className="activity-time">
-                          {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
-                            <>
-                              {formatTime(activity.startTime)}
-                              {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                              {activity.endTime && (
-                                <span className="duration">
-                                  ({formatDuration(activity.startTime, activity.endTime)})
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            formatTime(activity.startTime)
+                        <div className="activity-time-container">
+                          <span className="activity-time">
+                            {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                              <>
+                                {formatTime(activity.startTime)}
+                                {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                                {activity.endTime && (
+                                  <span className="duration">
+                                    ({formatDuration(activity.startTime, activity.endTime)})
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              formatTime(activity.startTime)
+                            )}
+                            {activity.feedingType && (
+                              <span className="activity-subtype"> ({activity.feedingType})</span>
+                            )}
+                            {activity.diaperType && (
+                              <span className="activity-subtype"> ({activity.diaperType})</span>
+                            )}
+                          </span>
+                          
+                          {expandedActivityInfo.has(activity.id) && activity.originalStartTime && (
+                            <div className="original-info">
+                              <span className="original-time">
+                                {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                                  <>
+                                    {formatTime(activity.originalStartTime)}
+                                    {activity.originalEndTime && ` - ${formatTime(activity.originalEndTime)}`}
+                                    {activity.originalEndTime && (
+                                      <span className="duration">
+                                        ({formatDuration(activity.originalStartTime, activity.originalEndTime)})
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  formatTime(activity.originalStartTime)
+                                )}
+                                {activity.originalFeedingType && (
+                                  <span className="activity-subtype"> ({activity.originalFeedingType})</span>
+                                )}
+                                {activity.originalDiaperType && (
+                                  <span className="activity-subtype"> ({activity.originalDiaperType})</span>
+                                )}
+                              </span>
+                            </div>
                           )}
-                        </span>
-                        <button 
-                          className="edit-btn"
-                          onClick={() => setEditingActivity(activity.id)}
-                          title="Edit activity"
-                        >
-                          <TbEdit />
-                        </button>
+                        </div>
+                        <div className="activity-buttons">
+                          {activity.originalStartTime && (
+                            <button 
+                              className="info-btn"
+                              onClick={() => toggleActivityInfo(activity.id)}
+                              title="View original activity info"
+                            >
+                              <TbInfoCircle />
+                            </button>
+                          )}
+                          <button 
+                            className="edit-btn"
+                            onClick={() => setEditingActivity(activity.id)}
+                            title="Edit activity"
+                          >
+                            <TbEdit />
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}
@@ -1007,28 +1088,73 @@ function App() {
                         {getActivityLabel(activity)}
                       </span>
                       <div className="activity-info">
-                        <span className="activity-time">
-                          {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
-                            <>
-                              {formatTime(activity.startTime)}
-                              {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                              {activity.endTime && (
-                                <span className="duration">
-                                  ({formatDuration(activity.startTime, activity.endTime)})
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            formatTime(activity.startTime)
+                        <div className="activity-time-container">
+                          <span className="activity-time">
+                            {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                              <>
+                                {formatTime(activity.startTime)}
+                                {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                                {activity.endTime && (
+                                  <span className="duration">
+                                    ({formatDuration(activity.startTime, activity.endTime)})
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              formatTime(activity.startTime)
+                            )}
+                            {activity.feedingType && (
+                              <span className="activity-subtype"> ({activity.feedingType})</span>
+                            )}
+                            {activity.diaperType && (
+                              <span className="activity-subtype"> ({activity.diaperType})</span>
+                            )}
+                          </span>
+                          
+                          {expandedActivityInfo.has(activity.id) && activity.originalStartTime && (
+                            <div className="original-info">
+                              <span className="original-time">
+                                {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                                  <>
+                                    {formatTime(activity.originalStartTime)}
+                                    {activity.originalEndTime && ` - ${formatTime(activity.originalEndTime)}`}
+                                    {activity.originalEndTime && (
+                                      <span className="duration">
+                                        ({formatDuration(activity.originalStartTime, activity.originalEndTime)})
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  formatTime(activity.originalStartTime)
+                                )}
+                                {activity.originalFeedingType && (
+                                  <span className="activity-subtype"> ({activity.originalFeedingType})</span>
+                                )}
+                                {activity.originalDiaperType && (
+                                  <span className="activity-subtype"> ({activity.originalDiaperType})</span>
+                                )}
+                              </span>
+                            </div>
                           )}
-                        </span>
-                        <button 
-                          className="edit-btn"
-                          onClick={() => setEditingActivity(activity.id)}
-                          title="Edit activity"
-                        >
-                          <TbEdit />
-                        </button>
+                        </div>
+                        <div className="activity-buttons">
+                          {activity.originalStartTime && (
+                            <button 
+                              className="info-btn"
+                              onClick={() => toggleActivityInfo(activity.id)}
+                              title="View original activity info"
+                            >
+                              <TbInfoCircle />
+                            </button>
+                          )}
+                          <button 
+                            className="edit-btn"
+                            onClick={() => setEditingActivity(activity.id)}
+                            title="Edit activity"
+                          >
+                            <TbEdit />
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}
@@ -1191,28 +1317,73 @@ function App() {
                                 {getActivityLabel(activity)}
                               </span>
                               <div className="activity-info">
-                                <span className="activity-time">
-                                  {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
-                                    <>
-                                      {formatTime(activity.startTime)}
-                                      {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                                      {activity.endTime && (
-                                        <span className="duration">
-                                          ({formatDuration(activity.startTime, activity.endTime)})
-                                        </span>
-                                      )}
-                                    </>
-                                  ) : (
-                                    formatTime(activity.startTime)
+                                <div className="activity-time-container">
+                                  <span className="activity-time">
+                                    {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                                      <>
+                                        {formatTime(activity.startTime)}
+                                        {activity.endTime && ` - ${formatTime(activity.endTime)}`}
+                                        {activity.endTime && (
+                                          <span className="duration">
+                                            ({formatDuration(activity.startTime, activity.endTime)})
+                                          </span>
+                                        )}
+                                      </>
+                                    ) : (
+                                      formatTime(activity.startTime)
+                                    )}
+                                    {activity.feedingType && (
+                                      <span className="activity-subtype"> ({activity.feedingType})</span>
+                                    )}
+                                    {activity.diaperType && (
+                                      <span className="activity-subtype"> ({activity.diaperType})</span>
+                                    )}
+                                  </span>
+                                  
+                                  {expandedActivityInfo.has(activity.id) && activity.originalStartTime && (
+                                    <div className="original-info">
+                                      <span className="original-time">
+                                        {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                                          <>
+                                            {formatTime(activity.originalStartTime)}
+                                            {activity.originalEndTime && ` - ${formatTime(activity.originalEndTime)}`}
+                                            {activity.originalEndTime && (
+                                              <span className="duration">
+                                                ({formatDuration(activity.originalStartTime, activity.originalEndTime)})
+                                              </span>
+                                            )}
+                                          </>
+                                        ) : (
+                                          formatTime(activity.originalStartTime)
+                                        )}
+                                        {activity.originalFeedingType && (
+                                          <span className="activity-subtype"> ({activity.originalFeedingType})</span>
+                                        )}
+                                        {activity.originalDiaperType && (
+                                          <span className="activity-subtype"> ({activity.originalDiaperType})</span>
+                                        )}
+                                      </span>
+                                    </div>
                                   )}
-                                </span>
-                                <button 
-                                  className="edit-btn"
-                                  onClick={() => setEditingActivity(activity.id)}
-                                  title="Edit activity"
-                                >
-                                  <TbEdit />
-                                </button>
+                                </div>
+                                <div className="activity-buttons">
+                                  {activity.originalStartTime && (
+                                    <button 
+                                      className="info-btn"
+                                      onClick={() => toggleActivityInfo(activity.id)}
+                                      title="View original activity info"
+                                    >
+                                      <TbInfoCircle />
+                                    </button>
+                                  )}
+                                  <button 
+                                    className="edit-btn"
+                                    onClick={() => setEditingActivity(activity.id)}
+                                    title="Edit activity"
+                                  >
+                                    <TbEdit />
+                                  </button>
+                                </div>
                               </div>
                             </>
                           )}
