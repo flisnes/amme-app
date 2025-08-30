@@ -164,10 +164,9 @@ function App() {
         ...currentActivity,
         endTime: new Date()
       }
-      setActivities(prev => {
-        const newActivities = [completedActivity, ...prev]
-        return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-      })
+      setActivities(prev => prev.map(activity => 
+        activity.id === currentActivity.id ? completedActivity : activity
+      ))
     }
 
     // Start the new activity
@@ -179,6 +178,12 @@ function App() {
     }
     setCurrentActivity(activity)
     
+    // Immediately add the ongoing activity to the log
+    setActivities(prev => {
+      const newActivities = [activity, ...prev]
+      return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+    })
+    
     // Close feeding options if they were open
     setShowFeedingOptions(false)
   }
@@ -189,11 +194,10 @@ function App() {
         ...currentActivity,
         endTime: new Date()
       }
-      setActivities(prev => {
-        const newActivities = [completedActivity, ...prev]
-        // Sort to maintain chronological order (newest first)
-        return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-      })
+      // Update the existing activity in the log with the end time
+      setActivities(prev => prev.map(activity => 
+        activity.id === currentActivity.id ? completedActivity : activity
+      ))
       setCurrentActivity(null)
     }
   }
@@ -205,10 +209,9 @@ function App() {
         ...currentActivity,
         endTime: new Date()
       }
-      setActivities(prev => {
-        const newActivities = [completedActivity, ...prev]
-        return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-      })
+      setActivities(prev => prev.map(activity => 
+        activity.id === currentActivity.id ? completedActivity : activity
+      ))
       setCurrentActivity(null)
     }
 
