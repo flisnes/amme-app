@@ -389,20 +389,6 @@ function App() {
     return new Date(year, month - 1, day, hours, minutes, 0, 0)
   }
   
-  const formatTimeOnlyForInput = (date: Date) => {
-    // Format for time input (HH:MM) in local timezone
-    const hours = date.getHours().toString().padStart(2, '0')
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    return `${hours}:${minutes}`
-  }
-  
-  const parseTimeOnlyFromInput = (timeString: string, baseDate: Date) => {
-    // Parse time-only input and combine with existing date
-    const [hours, minutes] = timeString.split(':').map(Number)
-    const newDate = new Date(baseDate)
-    newDate.setHours(hours, minutes, 0, 0)
-    return newDate
-  }
 
   const handleTouchStart = (e: React.TouchEvent, activityId: string) => {
     const touch = e.touches[0]
@@ -911,31 +897,55 @@ function App() {
                     onTouchEnd={() => handleTouchEnd(activity.id)}
                   >
                   {editingActivity === activity.id ? (
-                    <div className="edit-activity">
+                    <div className="edit-form">
                       <div className="edit-row">
-                        <label>Start Time:</label>
-                        <input
-                          type="time"
-                          value={formatTimeOnlyForInput(activity.startTime)}
-                          onChange={(e) => {
-                            const newStartTime = parseTimeOnlyFromInput(e.target.value, activity.startTime)
-                            updateActivity(activity.id, { startTime: newStartTime })
-                          }}
-                        />
+                        <span className="activity-type">
+                          {getActivityIcon(activity.type)} {getActivityLabel(activity)}
+                        </span>
+                        <button 
+                          className="delete-btn"
+                          onClick={() => deleteActivity(activity.id)}
+                          title="Delete activity"
+                        >
+                          <TbTrash />
+                        </button>
                       </div>
-                      {activity.endTime && (
+                      {(activity.type === 'breastfeeding' || activity.type === 'sleep') && activity.endTime && (
                         <div className="edit-row">
-                          <label>End Time:</label>
+                          <label>End:</label>
                           <input
-                            type="time"
-                            value={formatTimeOnlyForInput(activity.endTime)}
+                            type="datetime-local"
+                            value={formatTimeForInput(activity.endTime)}
                             onChange={(e) => {
-                              const newEndTime = parseTimeOnlyFromInput(e.target.value, activity.endTime!)
-                              updateActivity(activity.id, { endTime: newEndTime })
+                              const newEndTime = parseTimeFromInput(e.target.value)
+                              // Ensure end time is not before start time
+                              if (newEndTime < activity.startTime) {
+                                // If end time is before start time, also update start time
+                                updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                              } else {
+                                updateActivity(activity.id, { endTime: newEndTime })
+                              }
                             }}
                           />
                         </div>
                       )}
+                      <div className="edit-row">
+                        <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
+                        <input
+                          type="datetime-local"
+                          value={formatTimeForInput(activity.startTime)}
+                          onChange={(e) => {
+                            const newStartTime = parseTimeFromInput(e.target.value)
+                            // Ensure start time is not after end time
+                            if (activity.endTime && newStartTime > activity.endTime) {
+                              // If start time is after end time, also update end time
+                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                            } else {
+                              updateActivity(activity.id, { startTime: newStartTime })
+                            }
+                          }}
+                        />
+                      </div>
                       {activity.type === 'breastfeeding' && (
                         <div className="edit-row">
                           <label>Type:</label>
@@ -966,17 +976,6 @@ function App() {
                           </select>
                         </div>
                       )}
-                      <div className="edit-row">
-                        <label>Notes:</label>
-                        <input
-                          type="text"
-                          value={activity.notes || ''}
-                          placeholder="Add notes..."
-                          onChange={(e) => {
-                            updateActivity(activity.id, { notes: e.target.value })
-                          }}
-                        />
-                      </div>
                       <div className="edit-actions">
                         <button 
                           className="save-btn"
@@ -985,11 +984,10 @@ function App() {
                           Save
                         </button>
                         <button 
-                          className="delete-btn"
-                          onClick={() => deleteActivity(activity.id)}
-                          title="Delete activity"
+                          className="cancel-btn"
+                          onClick={() => setEditingActivity(null)}
                         >
-                          <TbTrash />
+                          Cancel
                         </button>
                       </div>
                     </div>
