@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar, TbChevronLeft, TbChevronRight } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -27,6 +27,9 @@ function App() {
   const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
   const [showBurgerMenu, setShowBurgerMenu] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [currentView, setCurrentView] = useState<'activities' | 'calendar'>('activities')
+  const [calendarDate, setCalendarDate] = useState(new Date())
+  const [mainViewSwipe, setMainViewSwipe] = useState<{startX: number, startY: number, currentX: number, currentY: number, isDragging: boolean}>({ startX: 0, startY: 0, currentX: 0, currentY: 0, isDragging: false })
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
@@ -690,6 +693,119 @@ function App() {
     event.target.value = ''
   }
 
+  // Main view swipe handlers
+  const handleMainViewTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    setMainViewSwipe({
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      currentY: touch.clientY,
+      isDragging: true
+    })
+  }
+
+  const handleMainViewTouchMove = (e: React.TouchEvent) => {
+    if (!mainViewSwipe.isDragging) return
+    
+    const touch = e.touches[0]
+    setMainViewSwipe(prev => ({
+      ...prev,
+      currentX: touch.clientX,
+      currentY: touch.clientY
+    }))
+  }
+
+  const handleMainViewTouchEnd = () => {
+    if (!mainViewSwipe.isDragging) return
+    
+    const swipeDistance = mainViewSwipe.currentX - mainViewSwipe.startX
+    const verticalDistance = Math.abs(mainViewSwipe.currentY - mainViewSwipe.startY)
+    const swipeThreshold = 100
+    
+    // Only switch views if it's a mostly horizontal swipe
+    if (Math.abs(swipeDistance) > swipeThreshold && verticalDistance < 100) {
+      if (swipeDistance < 0 && currentView === 'activities') {
+        // Swipe left: activities → calendar
+        setCurrentView('calendar')
+      } else if (swipeDistance > 0 && currentView === 'calendar') {
+        // Swipe right: calendar → activities  
+        setCurrentView('activities')
+      }
+    }
+    
+    setMainViewSwipe({ startX: 0, startY: 0, currentX: 0, currentY: 0, isDragging: false })
+  }
+
+  // Calculate daily activity summaries
+  const getDailySummary = (date: Date) => {
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const dayActivities = activities.filter(activity => {
+      const activityDate = new Date(activity.startTime)
+      return activityDate >= startOfDay && activityDate <= endOfDay
+    })
+
+    const summary = {
+      feedings: dayActivities.filter(a => a.type === 'breastfeeding').length,
+      diapers: dayActivities.filter(a => a.type === 'diaper').length,
+      sleepDuration: 0
+    }
+
+    // Calculate total sleep duration
+    const sleepActivities = dayActivities.filter(a => a.type === 'sleep' && a.endTime)
+    summary.sleepDuration = sleepActivities.reduce((total, activity) => {
+      if (activity.endTime) {
+        return total + (activity.endTime.getTime() - activity.startTime.getTime())
+      }
+      return total
+    }, 0)
+
+    return summary
+  }
+
+  // Calendar helper functions
+  const getCalendarDays = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    
+    // First day of the month
+    const firstDay = new Date(year, month, 1)
+    // Last day of the month
+    const lastDay = new Date(year, month + 1, 0)
+    
+    // First day of the week for the calendar (Sunday = 0)
+    const firstCalendarDay = new Date(firstDay)
+    firstCalendarDay.setDate(firstCalendarDay.getDate() - firstDay.getDay())
+    
+    const days = []
+    const currentDate = new Date(firstCalendarDay)
+    
+    // Generate 42 days (6 weeks)
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(currentDate))
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+    
+    return { days, month, year, firstDay, lastDay }
+  }
+
+  const formatDurationHours = (ms: number) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60))
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+    
+    if (hours > 0) {
+      return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`
+    } else if (minutes > 0) {
+      return `${minutes}m`
+    } else {
+      return '0m'
+    }
+  }
+
   const todayActivities = activities.filter(activity => isToday(activity.startTime))
   const yesterdayActivities = activities.filter(activity => isYesterday(activity.startTime))
   const historicalActivities = activities.filter(activity => !isTodayOrYesterday(activity.startTime))
@@ -745,6 +861,17 @@ function App() {
             </label>
             
             <button 
+              className="menu-item calendar-menu-item"
+              onClick={() => {
+                setCurrentView('calendar')
+                setShowBurgerMenu(false)
+              }}
+            >
+              <TbCalendar />
+              <span>Calendar View</span>
+            </button>
+            
+            <button 
               className="menu-item about-menu-item"
               onClick={() => {
                 setShowAbout(true)
@@ -758,8 +885,15 @@ function App() {
         )}
       </header>
 
-      <main className="main-content">
-        <div className="button-grid">
+      <main 
+        className="main-content"
+        onTouchStart={handleMainViewTouchStart}
+        onTouchMove={handleMainViewTouchMove}
+        onTouchEnd={handleMainViewTouchEnd}
+      >
+        {currentView === 'activities' ? (
+          <div className="activities-view">
+            <div className="button-grid">
           <button 
             className={`activity-btn ${currentActivity?.type === 'breastfeeding' ? 'active' : ''}`}
             onClick={() => handleActivityClick('breastfeeding')}
@@ -1533,6 +1667,95 @@ function App() {
                   )}
                 </div>
               ))}
+          </div>
+        )}
+          </div>
+        ) : (
+          <div className="calendar-view">
+            <div className="calendar-header">
+              <button 
+                className="calendar-nav-btn"
+                onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
+              >
+                <TbChevronLeft />
+              </button>
+              <h2 className="calendar-title">
+                {calendarDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
+              </h2>
+              <button 
+                className="calendar-nav-btn"
+                onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
+              >
+                <TbChevronRight />
+              </button>
+            </div>
+
+            <div className="calendar-grid">
+              <div className="calendar-weekdays">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="weekday">{day}</div>
+                ))}
+              </div>
+              
+              <div className="calendar-days">
+                {getCalendarDays(calendarDate).days.map((day, index) => {
+                  const summary = getDailySummary(day)
+                  const isCurrentMonth = day.getMonth() === calendarDate.getMonth()
+                  const isToday = day.toDateString() === new Date().toDateString()
+                  const hasActivities = summary.feedings > 0 || summary.diapers > 0 || summary.sleepDuration > 0
+
+                  return (
+                    <div 
+                      key={index} 
+                      className={`calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''} ${hasActivities ? 'has-activities' : ''}`}
+                    >
+                      <div className="day-number">{day.getDate()}</div>
+                      {isCurrentMonth && hasActivities && (
+                        <div className="day-summary">
+                          {summary.feedings > 0 && (
+                            <div className="summary-item feeding">
+                              <TbBottle size={10} />
+                              <span>{summary.feedings}</span>
+                            </div>
+                          )}
+                          {summary.diapers > 0 && (
+                            <div className="summary-item diaper">
+                              <TbDiaper size={10} />
+                              <span>{summary.diapers}</span>
+                            </div>
+                          )}
+                          {summary.sleepDuration > 0 && (
+                            <div className="summary-item sleep">
+                              <TbMoon size={10} />
+                              <span>{formatDurationHours(summary.sleepDuration)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="calendar-legend">
+              <div className="legend-item">
+                <TbBottle size={14} />
+                <span>Feedings</span>
+              </div>
+              <div className="legend-item">
+                <TbDiaper size={14} />
+                <span>Diapers</span>
+              </div>
+              <div className="legend-item">
+                <TbMoon size={14} />
+                <span>Sleep</span>
+              </div>
+            </div>
+            
+            <div className="view-hint">
+              <p>Swipe right to return to activities view</p>
+            </div>
           </div>
         )}
       </main>
