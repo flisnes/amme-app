@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -601,6 +601,80 @@ function App() {
     })
   }
 
+  const exportData = () => {
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      appVersion: "1.0.0",
+      activities: activities.map(activity => ({
+        ...activity,
+        startTime: activity.startTime.toISOString(),
+        endTime: activity.endTime?.toISOString(),
+        originalStartTime: activity.originalStartTime?.toISOString(),
+        originalEndTime: activity.originalEndTime?.toISOString()
+      }))
+    }
+    
+    const dataStr = JSON.stringify(exportData, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(dataBlob)
+    link.download = `mamalog-activities-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target?.result as string)
+        
+        // Validate the imported data structure
+        if (!importedData.activities || !Array.isArray(importedData.activities)) {
+          alert('Invalid file format. Please select a valid MamaLog export file.')
+          return
+        }
+        
+        // Convert date strings back to Date objects
+        const importedActivities: Activity[] = importedData.activities.map((activity: any) => ({
+          ...activity,
+          startTime: new Date(activity.startTime),
+          endTime: activity.endTime ? new Date(activity.endTime) : undefined,
+          originalStartTime: activity.originalStartTime ? new Date(activity.originalStartTime) : undefined,
+          originalEndTime: activity.originalEndTime ? new Date(activity.originalEndTime) : undefined
+        }))
+        
+        // Merge with existing activities (avoid duplicates by ID)
+        const existingIds = new Set(activities.map(a => a.id))
+        const newActivities = importedActivities.filter(a => !existingIds.has(a.id))
+        
+        if (newActivities.length === 0) {
+          alert('No new activities found in the import file.')
+          return
+        }
+        
+        const mergedActivities = [...activities, ...newActivities]
+          .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+        
+        setActivities(mergedActivities)
+        alert(`Successfully imported ${newActivities.length} new activities!`)
+        
+      } catch (error) {
+        alert('Error reading file. Please ensure it\'s a valid MamaLog export file.')
+        console.error('Import error:', error)
+      }
+    }
+    
+    reader.readAsText(file)
+    // Reset the input so the same file can be imported again if needed
+    event.target.value = ''
+  }
+
   const todayActivities = activities.filter(activity => isToday(activity.startTime))
   const yesterdayActivities = activities.filter(activity => isYesterday(activity.startTime))
   const historicalActivities = activities.filter(activity => !isTodayOrYesterday(activity.startTime))
@@ -610,13 +684,32 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>MamaLog</h1>
-        <button 
-          className="theme-toggle"
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          aria-label="Toggle dark mode"
-        >
-          {isDarkMode ? '☀️' : '🌙'}
-        </button>
+        <div className="header-buttons">
+          <button 
+            className="export-btn"
+            onClick={exportData}
+            title="Export activities"
+            disabled={activities.length === 0}
+          >
+            <TbDownload />
+          </button>
+          <label className="import-btn" title="Import activities">
+            <TbUpload />
+            <input 
+              type="file"
+              accept=".json"
+              onChange={importData}
+              style={{ display: 'none' }}
+            />
+          </label>
+          <button 
+            className="theme-toggle"
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
       </header>
 
       <main className="main-content">
