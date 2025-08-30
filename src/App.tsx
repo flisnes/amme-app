@@ -239,9 +239,15 @@ function App() {
 
   const formatDuration = (start: Date, end: Date) => {
     const diff = end.getTime() - start.getTime()
-    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const minutes = Math.floor((diff % 3600000) / 60000)
     const seconds = Math.floor((diff % 60000) / 1000)
-    return `${minutes}m ${seconds}s`
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`
+    } else {
+      return `${minutes}m ${seconds}s`
+    }
   }
   
   const formatLiveDuration = (startTime: Date) => {
