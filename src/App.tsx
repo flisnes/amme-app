@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare } from 'react-icons/tb'
 import './App.css'
 
 type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
@@ -25,6 +25,8 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
+  const [showBurgerMenu, setShowBurgerMenu] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
   const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
@@ -145,6 +147,19 @@ function App() {
       setIsDarkMode(JSON.parse(savedDarkMode))
     }
   }, [])
+
+  // Close burger menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (showBurgerMenu && !target.closest('.burger-menu-btn') && !target.closest('.burger-menu-dropdown')) {
+        setShowBurgerMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showBurgerMenu])
 
   useEffect(() => {
     localStorage.setItem('babyTracker_activities', JSON.stringify(activities))
@@ -683,33 +698,64 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
+        <button 
+          className="burger-menu-btn"
+          onClick={() => setShowBurgerMenu(!showBurgerMenu)}
+          aria-label="Menu"
+        >
+          <TbMenu2 />
+        </button>
+        
         <h1>MamaLog</h1>
-        <div className="header-buttons">
-          <button 
-            className="export-btn"
-            onClick={exportData}
-            title="Export activities"
-            disabled={activities.length === 0}
-          >
-            <TbDownload />
-          </button>
-          <label className="import-btn" title="Import activities">
-            <TbUpload />
-            <input 
-              type="file"
-              accept=".json"
-              onChange={importData}
-              style={{ display: 'none' }}
-            />
-          </label>
-          <button 
-            className="theme-toggle"
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            aria-label="Toggle dark mode"
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
-        </div>
+        
+        <button 
+          className="theme-toggle"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          aria-label="Toggle dark mode"
+        >
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
+        
+        {showBurgerMenu && (
+          <div className="burger-menu-dropdown">
+            <button 
+              className="menu-item export-menu-item"
+              onClick={() => {
+                exportData()
+                setShowBurgerMenu(false)
+              }}
+              disabled={activities.length === 0}
+            >
+              <TbDownload />
+              <span>Export Data</span>
+            </button>
+            
+            <label className="menu-item import-menu-item">
+              <TbUpload />
+              <span>Import Data</span>
+              <input 
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  importData(e)
+                  setShowBurgerMenu(false)
+                }}
+                style={{ display: 'none' }}
+              />
+            </label>
+            
+            <button 
+              className="menu-item about-menu-item"
+              onClick={() => {
+                setShowAbout(true)
+                setShowBurgerMenu(false)
+              }}
+            >
+              <TbInfoSquare />
+              <span>About</span>
+            </button>
+          </div>
+        )}
       </header>
 
       <main className="main-content">
@@ -1490,6 +1536,55 @@ function App() {
           </div>
         )}
       </main>
+      
+      {/* About Modal */}
+      {showAbout && (
+        <div className="about-modal" onClick={() => setShowAbout(false)}>
+          <div className="about-content" onClick={(e) => e.stopPropagation()}>
+            <div className="about-header">
+              <h2>About MamaLog</h2>
+              <button 
+                className="close-btn"
+                onClick={() => setShowAbout(false)}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="about-body">
+              <p>
+                <strong>MamaLog</strong> is a simple and intuitive baby activity tracker 
+                designed to help parents log feeding, diaper changes, and sleep patterns.
+              </p>
+              
+              <div className="about-section">
+                <h3>Features</h3>
+                <ul>
+                  <li>Track feeding sessions (breastfeeding with left/right/bottle options)</li>
+                  <li>Log diaper changes (pee, poo, or both)</li>
+                  <li>Monitor sleep patterns with duration tracking</li>
+                  <li>Edit activity history with original data preservation</li>
+                  <li>Export/import data for backup and device sync</li>
+                  <li>Dark/light theme support</li>
+                </ul>
+              </div>
+              
+              <div className="about-section">
+                <h3>Data Privacy</h3>
+                <p>
+                  All data is stored locally on your device. No information is sent to external servers. 
+                  Use the export feature to backup your data or transfer between devices.
+                </p>
+              </div>
+              
+              <div className="about-section">
+                <h3>Version</h3>
+                <p>MamaLog v1.0.0</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Undo Toast */}
       {recentlyDeleted && (
