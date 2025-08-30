@@ -370,8 +370,14 @@ function App() {
   }
 
   const parseTimeFromInput = (timeString: string) => {
-    // Parse datetime-local input as local time
-    return new Date(timeString)
+    // Parse datetime-local input as local time consistently across environments
+    // Split the datetime-local format: "YYYY-MM-DDTHH:MM"
+    const [datePart, timePart] = timeString.split('T')
+    const [year, month, day] = datePart.split('-').map(Number)
+    const [hours, minutes] = timePart.split(':').map(Number)
+    
+    // Create date object with explicit local time components
+    return new Date(year, month - 1, day, hours, minutes, 0, 0)
   }
   
   const formatTimeOnlyForInput = (date: Date) => {
