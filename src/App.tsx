@@ -761,23 +761,6 @@ function App() {
                           <TbTrash />
                         </button>
                       </div>
-                      <div className="edit-row">
-                        <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
-                        <input
-                          type="datetime-local"
-                          value={formatTimeForInput(activity.startTime)}
-                          onChange={(e) => {
-                            const newStartTime = parseTimeFromInput(e.target.value)
-                            // Ensure start time is not after end time
-                            if (activity.endTime && newStartTime > activity.endTime) {
-                              // If start time is after end time, also update end time
-                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
-                            } else {
-                              updateActivity(activity.id, { startTime: newStartTime })
-                            }
-                          }}
-                        />
-                      </div>
                       {(activity.type === 'breastfeeding' || activity.type === 'sleep') && activity.endTime && (
                         <div className="edit-row">
                           <label>End:</label>
@@ -797,6 +780,23 @@ function App() {
                           />
                         </div>
                       )}
+                      <div className="edit-row">
+                        <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
+                        <input
+                          type="datetime-local"
+                          value={formatTimeForInput(activity.startTime)}
+                          onChange={(e) => {
+                            const newStartTime = parseTimeFromInput(e.target.value)
+                            // Ensure start time is not after end time
+                            if (activity.endTime && newStartTime > activity.endTime) {
+                              // If start time is after end time, also update end time
+                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                            } else {
+                              updateActivity(activity.id, { startTime: newStartTime })
+                            }
+                          }}
+                        />
+                      </div>
                       {activity.type === 'breastfeeding' && (
                         <div className="edit-row">
                           <label>Type:</label>
@@ -1096,23 +1096,6 @@ function App() {
                                   <TbTrash />
                                 </button>
                               </div>
-                              <div className="edit-row">
-                                <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
-                                <input
-                                  type="datetime-local"
-                                  value={formatTimeForInput(activity.startTime)}
-                                  onChange={(e) => {
-                                    const newStartTime = parseTimeFromInput(e.target.value)
-                                    // Ensure start time is not after end time
-                                    if (activity.endTime && newStartTime > activity.endTime) {
-                                      // If start time is after end time, also update end time
-                                      updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
-                                    } else {
-                                      updateActivity(activity.id, { startTime: newStartTime })
-                                    }
-                                  }}
-                                />
-                              </div>
                               {(activity.type === 'breastfeeding' || activity.type === 'sleep') && activity.endTime && (
                                 <div className="edit-row">
                                   <label>End:</label>
@@ -1132,6 +1115,23 @@ function App() {
                                   />
                                 </div>
                               )}
+                              <div className="edit-row">
+                                <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
+                                <input
+                                  type="datetime-local"
+                                  value={formatTimeForInput(activity.startTime)}
+                                  onChange={(e) => {
+                                    const newStartTime = parseTimeFromInput(e.target.value)
+                                    // Ensure start time is not after end time
+                                    if (activity.endTime && newStartTime > activity.endTime) {
+                                      // If start time is after end time, also update end time
+                                      updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                                    } else {
+                                      updateActivity(activity.id, { startTime: newStartTime })
+                                    }
+                                  }}
+                                />
+                              </div>
                               {activity.type === 'breastfeeding' && (
                                 <div className="edit-row">
                                   <label>Type:</label>
