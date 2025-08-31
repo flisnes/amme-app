@@ -480,6 +480,17 @@ function App() {
       const swipeThreshold = window.innerWidth * 0.4 // 2/5 of screen width - easier to trigger
       
       if (swipeDistance > swipeThreshold && swipeState.isActive) {
+        // Check if the activity is ongoing (no end time) - if so, don't allow deletion
+        const activity = activities.find(a => a.id === activityId)
+        if (activity && !activity.endTime) {
+          // For ongoing activities, just reset the swipe state without deleting
+          setSwipeStates(prev => {
+            const newState = { ...prev }
+            delete newState[activityId]
+            return newState
+          })
+          return
+        }
         // Start slide-out animation
         setSlidingOutItems(prev => new Set(prev).add(activityId))
         
