@@ -31,8 +31,27 @@ function App() {
   const [currentView, setCurrentView] = useState<'activities' | 'calendar'>('activities')
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
-  const [mainViewSwipe, setMainViewSwipe] = useState<{startX: number, startY: number, currentX: number, currentY: number, isDragging: boolean}>({ startX: 0, startY: 0, currentX: 0, currentY: 0, isDragging: false })
-  const [swipeStates, setSwipeStates] = useState<Record<string, { startX: number; startY: number; currentX: number; currentY: number; isDragging: boolean; isActive: boolean }>>({})
+  // Unified touch gesture system
+  const [touchState, setTouchState] = useState<{
+    startX: number
+    startY: number
+    currentX: number
+    currentY: number
+    isDragging: boolean
+    startTime: number
+    target: EventTarget | null
+    gestureType: 'none' | 'view-navigation' | 'activity-swipe'
+    activityId?: string
+  }>({
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    isDragging: false,
+    startTime: 0,
+    target: null,
+    gestureType: 'none'
+  })
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -437,98 +456,124 @@ function App() {
   }
   
 
-  const handleTouchStart = (e: React.TouchEvent, activityId: string) => {
+  // Unified touch gesture handlers
+  const handleGlobalTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0]
-    setSwipeStates(prev => ({
+    const target = e.target as HTMLElement
+    
+    // Find if touch started on an activity item
+    const activityElement = target.closest('.activity-item') as HTMLElement
+    const activityId = activityElement?.getAttribute('data-activity-id')
+    const isHeader = target.closest('.app-header')
+    
+    // Skip gesture handling in header area
+    if (isHeader) return
+    
+    setTouchState({
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      currentY: touch.clientY,
+      isDragging: true,
+      startTime: Date.now(),
+      target: e.target,
+      gestureType: 'none', // Will be determined during move
+      activityId: activityId || undefined
+    })
+  }
+
+  const handleGlobalTouchMove = (e: React.TouchEvent) => {
+    if (!touchState.isDragging) return
+    
+    const touch = e.touches[0]
+    const horizontalDistance = touch.clientX - touchState.startX
+    const verticalDistance = Math.abs(touch.clientY - touchState.startY)
+    const threshold = 30
+    
+    // Determine gesture type if not already set
+    let gestureType = touchState.gestureType
+    if (gestureType === 'none' && Math.max(Math.abs(horizontalDistance), verticalDistance) > threshold) {
+      if (touchState.activityId && horizontalDistance > threshold && verticalDistance < threshold * 2) {
+        // Horizontal swipe on activity = activity swipe
+        gestureType = 'activity-swipe'
+      } else if (Math.abs(horizontalDistance) > threshold && verticalDistance < 100) {
+        // Horizontal swipe elsewhere = view navigation
+        gestureType = 'view-navigation'
+      }
+    }
+    
+    setTouchState(prev => ({
       ...prev,
-      [activityId]: {
-        startX: touch.clientX,
-        startY: touch.clientY,
-        currentX: touch.clientX,
-        currentY: touch.clientY,
-        isDragging: true,
-        isActive: false
-      }
+      currentX: touch.clientX,
+      currentY: touch.clientY,
+      gestureType
     }))
-  }
-
-  const handleTouchMove = (e: React.TouchEvent, activityId: string) => {
-    const touch = e.touches[0]
-    const swipeState = swipeStates[activityId]
     
-    if (swipeState?.isDragging) {
-      const horizontalDistance = touch.clientX - swipeState.startX
-      const verticalDistance = Math.abs(touch.clientY - swipeState.startY)
-      const threshold = 30
-      
-      // Only activate if moving mostly horizontally (not vertical scrolling)
-      const isHorizontalGesture = horizontalDistance > threshold && verticalDistance < threshold * 2
-      
-      setSwipeStates(prev => ({
-        ...prev,
-        [activityId]: {
-          ...swipeState,
-          currentX: touch.clientX,
-          currentY: touch.clientY,
-          isActive: isHorizontalGesture && horizontalDistance > 0
-        }
-      }))
+    // Prevent scrolling during active gestures
+    if (gestureType !== 'none') {
+      e.preventDefault()
     }
   }
 
-  const handleTouchEnd = (activityId: string) => {
-    const swipeState = swipeStates[activityId]
+  const handleGlobalTouchEnd = () => {
+    if (!touchState.isDragging) return
     
-    if (swipeState?.isDragging) {
-      const swipeDistance = swipeState.currentX - swipeState.startX
-      const swipeThreshold = window.innerWidth * 0.4 // 2/5 of screen width - easier to trigger
-      
-      if (swipeDistance > swipeThreshold && swipeState.isActive) {
-        // Check if the activity is ongoing (no end time) - if so, don't allow deletion
-        const activity = activities.find(a => a.id === activityId)
-        if (activity && !activity.endTime) {
-          // For ongoing activities, just reset the swipe state without deleting
-          setSwipeStates(prev => {
-            const newState = { ...prev }
-            delete newState[activityId]
-            return newState
-          })
-          return
+    const horizontalDistance = touchState.currentX - touchState.startX
+    const verticalDistance = Math.abs(touchState.currentY - touchState.startY)
+    
+    if (touchState.gestureType === 'activity-swipe' && touchState.activityId) {
+      // Handle activity swipe-to-delete
+      const swipeThreshold = window.innerWidth * 0.4
+      if (horizontalDistance > swipeThreshold) {
+        const activity = activities.find(a => a.id === touchState.activityId)
+        if (activity && activity.endTime) { // Only allow deletion of completed activities
+          setSlidingOutItems(prev => new Set(prev).add(touchState.activityId!))
+          setTimeout(() => {
+            deleteActivity(touchState.activityId!)
+            setSlidingOutItems(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(touchState.activityId!)
+              return newSet
+            })
+          }, 300)
         }
-        // Start slide-out animation
-        setSlidingOutItems(prev => new Set(prev).add(activityId))
-        
-        // Delete after animation completes
-        setTimeout(() => {
-          deleteActivity(activityId)
-          setSlidingOutItems(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(activityId)
-            return newSet
-          })
-        }, 300) // Match animation duration
       }
-      
-      // Reset swipe state
-      setSwipeStates(prev => {
-        const newState = { ...prev }
-        delete newState[activityId]
-        return newState
-      })
+    } else if (touchState.gestureType === 'view-navigation') {
+      // Handle view navigation
+      const swipeThreshold = 100
+      if (Math.abs(horizontalDistance) > swipeThreshold && verticalDistance < 100) {
+        if (horizontalDistance < 0 && currentView === 'activities') {
+          // Swipe left: activities → calendar
+          setCurrentView('calendar')
+        } else if (horizontalDistance > 0 && currentView === 'calendar') {
+          // Swipe right: calendar → activities  
+          setCurrentView('activities')
+        }
+      }
     }
+    
+    // Reset touch state
+    setTouchState({
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      isDragging: false,
+      startTime: 0,
+      target: null,
+      gestureType: 'none'
+    })
   }
 
   const getSwipeTransform = (activityId: string) => {
-    const swipeState = swipeStates[activityId]
-    
     // If item is sliding out, move it completely off screen
     if (slidingOutItems.has(activityId)) {
       return `translateX(${window.innerWidth}px)`
     }
     
-    if (swipeState?.isDragging && swipeState.isActive) {
-      // Start movement from 0 when threshold is crossed, not from finger position
-      const totalDistance = swipeState.currentX - swipeState.startX
+    // Check if this activity is currently being swiped
+    if (touchState.gestureType === 'activity-swipe' && touchState.activityId === activityId && touchState.isDragging) {
+      const totalDistance = touchState.currentX - touchState.startX
       const threshold = 30
       const movementDistance = Math.max(0, totalDistance - threshold)
       return `translateX(${movementDistance}px)`
@@ -537,9 +582,8 @@ function App() {
   }
 
   const getSwipeOpacity = (activityId: string) => {
-    const swipeState = swipeStates[activityId]
-    if (swipeState?.isDragging && swipeState.isActive) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX - 30) // Subtract threshold
+    if (touchState.gestureType === 'activity-swipe' && touchState.activityId === activityId && touchState.isDragging) {
+      const distance = Math.max(0, touchState.currentX - touchState.startX - 30) // Subtract threshold
       const opacity = Math.max(0.4, 1 - (distance / 170)) // Smoother fade
       return opacity
     }
@@ -547,9 +591,8 @@ function App() {
   }
 
   const getSwipeBackgroundColor = (activityId: string) => {
-    const swipeState = swipeStates[activityId]
-    if (swipeState?.isDragging && swipeState.isActive) {
-      const distance = Math.max(0, swipeState.currentX - swipeState.startX - 30) // Subtract threshold
+    if (touchState.gestureType === 'activity-swipe' && touchState.activityId === activityId && touchState.isDragging) {
+      const distance = Math.max(0, touchState.currentX - touchState.startX - 30) // Subtract threshold
       const intensity = Math.min(1, distance / 120) // Fully red at 150px total (120px after threshold)
       
       // Clean transition: transparent → light red → dark red
@@ -709,49 +752,6 @@ function App() {
     event.target.value = ''
   }
 
-  // Main view swipe handlers
-  const handleMainViewTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0]
-    setMainViewSwipe({
-      startX: touch.clientX,
-      startY: touch.clientY,
-      currentX: touch.clientX,
-      currentY: touch.clientY,
-      isDragging: true
-    })
-  }
-
-  const handleMainViewTouchMove = (e: React.TouchEvent) => {
-    if (!mainViewSwipe.isDragging) return
-    
-    const touch = e.touches[0]
-    setMainViewSwipe(prev => ({
-      ...prev,
-      currentX: touch.clientX,
-      currentY: touch.clientY
-    }))
-  }
-
-  const handleMainViewTouchEnd = () => {
-    if (!mainViewSwipe.isDragging) return
-    
-    const swipeDistance = mainViewSwipe.currentX - mainViewSwipe.startX
-    const verticalDistance = Math.abs(mainViewSwipe.currentY - mainViewSwipe.startY)
-    const swipeThreshold = 100
-    
-    // Only switch views if it's a mostly horizontal swipe
-    if (Math.abs(swipeDistance) > swipeThreshold && verticalDistance < 100) {
-      if (swipeDistance < 0 && currentView === 'activities') {
-        // Swipe left: activities → calendar
-        setCurrentView('calendar')
-      } else if (swipeDistance > 0 && currentView === 'calendar') {
-        // Swipe right: calendar → activities  
-        setCurrentView('activities')
-      }
-    }
-    
-    setMainViewSwipe({ startX: 0, startY: 0, currentX: 0, currentY: 0, isDragging: false })
-  }
 
   // Calculate daily activity summaries
   const getDailySummary = (date: Date) => {
@@ -848,7 +848,12 @@ function App() {
   const historicalGroups = groupActivitiesByDate(historicalActivities)
 
   return (
-    <div className="app">
+    <div 
+      className="app"
+      onTouchStart={handleGlobalTouchStart}
+      onTouchMove={handleGlobalTouchMove}
+      onTouchEnd={handleGlobalTouchEnd}
+    >
       <header className="app-header">
         <button 
           className="burger-menu-btn"
@@ -921,12 +926,7 @@ function App() {
         )}
       </header>
 
-      <main 
-        className="main-content"
-        onTouchStart={handleMainViewTouchStart}
-        onTouchMove={handleMainViewTouchMove}
-        onTouchEnd={handleMainViewTouchEnd}
-      >
+      <main className="main-content">
         {currentView === 'activities' ? (
           <div className="activities-view">
             <div className="button-grid">
@@ -1051,18 +1051,16 @@ function App() {
                 {todayActivities.slice(0, 10).map(activity => (
                 <li key={activity.id}>
                   <div
-                    className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                    className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
+                    data-activity-id={activity.id}
                     style={{
                       transform: getSwipeTransform(activity.id),
                       opacity: getSwipeOpacity(activity.id),
                       backgroundColor: getSwipeBackgroundColor(activity.id),
-                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                      transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 
                                  slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
                                  'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
                     }}
-                    onTouchStart={(e) => handleTouchStart(e, activity.id)}
-                    onTouchMove={(e) => handleTouchMove(e, activity.id)}
-                    onTouchEnd={() => handleTouchEnd(activity.id)}
                   >
                   {editingActivity === activity.id ? (
                     <div className="edit-form">
@@ -1185,7 +1183,7 @@ function App() {
                           className="activity-icon-container"
                           style={{
                             transform: `scale(1)`,
-                            transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                            transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 'transform 0.2s ease'
                           }}
                         >
                           {getActivityIcon(activity.type)}
@@ -1282,18 +1280,16 @@ function App() {
                 {yesterdayActivities.slice(0, 10).map(activity => (
                 <li key={activity.id}>
                   <div
-                    className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                    className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
+                    data-activity-id={activity.id}
                     style={{
                       transform: getSwipeTransform(activity.id),
                       opacity: getSwipeOpacity(activity.id),
                       backgroundColor: getSwipeBackgroundColor(activity.id),
-                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                      transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 
                                  slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
                                  'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
                     }}
-                    onTouchStart={(e) => handleTouchStart(e, activity.id)}
-                    onTouchMove={(e) => handleTouchMove(e, activity.id)}
-                    onTouchEnd={() => handleTouchEnd(activity.id)}
                   >
                   {editingActivity === activity.id ? (
                     <div className="edit-form">
@@ -1416,7 +1412,7 @@ function App() {
                           className="activity-icon-container"
                           style={{
                             transform: `scale(1)`,
-                            transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                            transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 'transform 0.2s ease'
                           }}
                         >
                           {getActivityIcon(activity.type)}
@@ -1534,18 +1530,16 @@ function App() {
                       {dayActivities.map(activity => (
                         <li key={activity.id}>
                           <div
-                            className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                            className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
+                            data-activity-id={activity.id}
                             style={{
                               transform: getSwipeTransform(activity.id),
                               opacity: getSwipeOpacity(activity.id),
                               backgroundColor: getSwipeBackgroundColor(activity.id),
-                              transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                              transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 
                                          slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
                                          'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
                             }}
-                            onTouchStart={(e) => handleTouchStart(e, activity.id)}
-                            onTouchMove={(e) => handleTouchMove(e, activity.id)}
-                            onTouchEnd={() => handleTouchEnd(activity.id)}
                           >
                           {editingActivity === activity.id ? (
                             <div className="edit-form">
@@ -1660,7 +1654,7 @@ function App() {
                                   className="activity-icon-container"
                                   style={{
                                     transform: `scale(1)`,
-                                    transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                                    transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 'transform 0.2s ease'
                                   }}
                                 >
                                   {getActivityIcon(activity.type)}
@@ -1907,18 +1901,16 @@ function App() {
               {getActivitiesForDay(selectedDay).map(activity => (
                 <div key={activity.id} className="day-activity-item">
                   <div
-                    className={`activity-item ${swipeStates[activity.id]?.isDragging ? 'swiping' : ''}`}
+                    className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
+                    data-activity-id={activity.id}
                     style={{
                       transform: getSwipeTransform(activity.id),
                       opacity: getSwipeOpacity(activity.id),
                       backgroundColor: getSwipeBackgroundColor(activity.id),
-                      transition: swipeStates[activity.id]?.isDragging ? 'none' : 
+                      transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 
                                  slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
                                  'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
                     }}
-                    onTouchStart={(e) => handleTouchStart(e, activity.id)}
-                    onTouchMove={(e) => handleTouchMove(e, activity.id)}
-                    onTouchEnd={() => handleTouchEnd(activity.id)}
                   >
                   {editingActivity === activity.id ? (
                     <div className="edit-form">
@@ -2037,7 +2029,7 @@ function App() {
                           className="activity-icon-container"
                           style={{
                             transform: `scale(1)`,
-                            transition: swipeStates[activity.id]?.isDragging ? 'none' : 'transform 0.2s ease'
+                            transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 'transform 0.2s ease'
                           }}
                         >
                           {getActivityIcon(activity.type)}
