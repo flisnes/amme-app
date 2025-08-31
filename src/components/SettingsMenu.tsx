@@ -1,14 +1,15 @@
-import { TbMenu2, TbDownload, TbUpload, TbCalendar, TbInfoSquare } from 'react-icons/tb'
+import { TbMenu2, TbDownload, TbUpload, TbCalendar, TbInfoSquare, TbList } from 'react-icons/tb'
 
 interface SettingsMenuProps {
   showBurgerMenu: boolean
   isDarkMode: boolean
   activities: any[]
+  currentView: 'activities' | 'calendar'
   onToggleMenu: () => void
   onToggleTheme: () => void
   onExportData: () => void
   onImportData: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onShowCalendar: () => void
+  onToggleView: () => void
   onShowAbout: () => void
   onCloseMenu: () => void
 }
@@ -17,11 +18,12 @@ export const SettingsMenu = ({
   showBurgerMenu,
   isDarkMode,
   activities,
+  currentView,
   onToggleMenu,
   onToggleTheme,
   onExportData,
   onImportData,
-  onShowCalendar,
+  onToggleView,
   onShowAbout,
   onCloseMenu
 }: SettingsMenuProps) => {
@@ -35,8 +37,8 @@ export const SettingsMenu = ({
     onCloseMenu()
   }
 
-  const handleCalendarView = () => {
-    onShowCalendar()
+  const handleToggleView = () => {
+    onToggleView()
     onCloseMenu()
   }
 
@@ -89,10 +91,19 @@ export const SettingsMenu = ({
           
           <button 
             className="menu-item calendar-menu-item"
-            onClick={handleCalendarView}
+            onClick={handleToggleView}
           >
-            <TbCalendar />
-            <span>Calendar View</span>
+            {currentView === 'activities' ? (
+              <>
+                <TbCalendar />
+                <span>Calendar View</span>
+              </>
+            ) : (
+              <>
+                <TbList />
+                <span>Activity Log</span>
+              </>
+            )}
           </button>
           
           <button 

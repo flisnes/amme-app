@@ -492,11 +492,12 @@ function App() {
         showBurgerMenu={showBurgerMenu}
         isDarkMode={isDarkMode}
         activities={activities}
+        currentView={currentView}
         onToggleMenu={() => setShowBurgerMenu(!showBurgerMenu)}
         onToggleTheme={() => setIsDarkMode(!isDarkMode)}
         onExportData={exportData}
         onImportData={importData}
-        onShowCalendar={() => setCurrentView('calendar')}
+        onToggleView={() => setCurrentView(currentView === 'activities' ? 'calendar' : 'activities')}
         onShowAbout={() => setShowAbout(true)}
         onCloseMenu={() => setShowBurgerMenu(false)}
       />
