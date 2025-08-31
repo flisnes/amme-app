@@ -919,7 +919,15 @@ function App() {
             className={`activity-btn ${currentActivity?.type === 'breastfeeding' ? 'active' : ''}`}
             onClick={() => handleActivityClick('breastfeeding')}
           >
-            <span className="activity-icon"><TbBottle size={24} /></span>
+            <span 
+              className={`activity-icon ${currentActivity?.type === 'breastfeeding' ? 'activity-icon-animated feeding' : ''}`}
+              ref={currentActivity?.type === 'breastfeeding' ? feedingIconRef : null}
+            >
+              <TbBottle size={24} />
+              {currentActivity?.type === 'breastfeeding' && (
+                <div className="feeding-emitter" />
+              )}
+            </span>
             <span className="activity-label">
               {currentActivity?.type === 'breastfeeding' ? 'Stop Feeding' : 'Start Feeding'}
             </span>
@@ -937,44 +945,22 @@ function App() {
             className={`activity-btn ${currentActivity?.type === 'sleep' ? 'active' : ''}`}
             onClick={() => handleActivityClick('sleep')}
           >
-            <span className="activity-icon"><TbMoon size={24} /></span>
+            <span className={`activity-icon ${currentActivity?.type === 'sleep' ? 'activity-icon-animated sleeping' : ''}`}>
+              <TbMoon size={24} />
+              {currentActivity?.type === 'sleep' && (
+                <>
+                  <span className="floating-z z1">z</span>
+                  <span className="floating-z z2">z</span>
+                  <span className="floating-z z3">Z</span>
+                </>
+              )}
+            </span>
             <span className="activity-label">
               {currentActivity?.type === 'sleep' ? 'Stop Sleep' : 'Start Sleep'}
             </span>
           </button>
         </div>
 
-        {currentActivity && (
-          <div className="active-session">
-            <p>
-              <span 
-                className={`activity-icon-animated ${currentActivity.type === 'sleep' ? 'sleeping' : currentActivity.type === 'breastfeeding' ? 'feeding' : ''}`}
-                ref={currentActivity.type === 'breastfeeding' ? feedingIconRef : null}
-              >
-                {getActivityIcon(currentActivity.type)}
-                {currentActivity.type === 'sleep' && (
-                  <>
-                    <span className="floating-z z1">z</span>
-                    <span className="floating-z z2">z</span>
-                    <span className="floating-z z3">Z</span>
-                  </>
-                )}
-                {currentActivity.type === 'breastfeeding' && (
-                  <div className="feeding-emitter" />
-                )}
-              </span>
-              {' '}{getActivityLabel(currentActivity)} started at {formatTime(currentActivity.startTime)}
-            </p>
-            {(currentActivity.type === 'sleep' || currentActivity.type === 'breastfeeding') && (
-              <div className={`duration-display ${currentActivity.type === 'breastfeeding' ? 'feeding-duration' : ''}`}>
-                {formatLiveDuration(currentActivity.startTime)}
-              </div>
-            )}
-            <button className="stop-session-btn" onClick={stopActivity}>
-              Stop {getActivityLabel(currentActivity)}
-            </button>
-          </div>
-        )}
 
         {showDiaperOptions && (
           <div className="diaper-options">
@@ -1179,10 +1165,14 @@ function App() {
                             {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
                               <>
                                 {formatTime(activity.startTime)}
-                                {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                                {activity.endTime && (
+                                {activity.endTime ? ` - ${formatTime(activity.endTime)}` : ` - ${formatTime(currentTime)}`}
+                                {activity.endTime ? (
                                   <span className="duration">
                                     ({formatDuration(activity.startTime, activity.endTime)})
+                                  </span>
+                                ) : (
+                                  <span className="duration">
+                                    ({formatLiveDuration(activity.startTime)})
                                   </span>
                                 )}
                               </>
@@ -1387,10 +1377,14 @@ function App() {
                             {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
                               <>
                                 {formatTime(activity.startTime)}
-                                {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                                {activity.endTime && (
+                                {activity.endTime ? ` - ${formatTime(activity.endTime)}` : ` - ${formatTime(currentTime)}`}
+                                {activity.endTime ? (
                                   <span className="duration">
                                     ({formatDuration(activity.startTime, activity.endTime)})
+                                  </span>
+                                ) : (
+                                  <span className="duration">
+                                    ({formatLiveDuration(activity.startTime)})
                                   </span>
                                 )}
                               </>
@@ -1974,10 +1968,14 @@ function App() {
                             {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
                               <>
                                 {formatTime(activity.startTime)}
-                                {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                                {activity.endTime && (
+                                {activity.endTime ? ` - ${formatTime(activity.endTime)}` : ` - ${formatTime(currentTime)}`}
+                                {activity.endTime ? (
                                   <span className="duration">
                                     ({formatDuration(activity.startTime, activity.endTime)})
+                                  </span>
+                                ) : (
+                                  <span className="duration">
+                                    ({formatLiveDuration(activity.startTime)})
                                   </span>
                                 )}
                               </>
