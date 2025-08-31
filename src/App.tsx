@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar } from 'react-icons/tb'
+import { TbTrash, TbEdit, TbInfoCircle } from 'react-icons/tb'
 import './App.css'
 import type { Activity, ActivityType } from './types/Activity'
 import { useActivities } from './hooks/useActivities'
@@ -7,6 +7,9 @@ import { ActivityItem } from './components/ActivityItem'
 import { Calendar } from './components/Calendar'
 import { ActivityControls } from './components/ActivityControls'
 import { DayDetailModal } from './components/DayDetailModal'
+import { SettingsMenu } from './components/SettingsMenu'
+import { AboutModal } from './components/AboutModal'
+import { UndoToast } from './components/UndoToast'
 import { formatTime, formatDuration, formatLiveDuration, formatTimeForInput, parseTimeFromInput, isToday, isYesterday, isTodayOrYesterday } from './utils/dateUtils'
 import { getActivityIcon, getActivityLabel } from './utils/activityUtils'
 
@@ -485,77 +488,18 @@ function App() {
       onTouchMove={handleGlobalTouchMove}
       onTouchEnd={handleGlobalTouchEnd}
     >
-      <header className="app-header">
-        <button 
-          className="burger-menu-btn"
-          onClick={() => setShowBurgerMenu(!showBurgerMenu)}
-          aria-label="Menu"
-        >
-          <TbMenu2 />
-        </button>
-        
-        <h1>MamaLog</h1>
-        
-        <button 
-          className="theme-toggle"
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          aria-label="Toggle dark mode"
-        >
-          {isDarkMode ? '☀️' : '🌙'}
-        </button>
-        
-        {showBurgerMenu && (
-          <div className="burger-menu-dropdown">
-            <button 
-              className="menu-item export-menu-item"
-              onClick={() => {
-                exportData()
-                setShowBurgerMenu(false)
-              }}
-              disabled={activities.length === 0}
-            >
-              <TbDownload />
-              <span>Export Data</span>
-            </button>
-            
-            <label className="menu-item import-menu-item">
-              <TbUpload />
-              <span>Import Data</span>
-              <input 
-                type="file"
-                accept=".json"
-                onChange={(e) => {
-                  importData(e)
-                  setShowBurgerMenu(false)
-                }}
-                style={{ display: 'none' }}
-              />
-            </label>
-            
-            <button 
-              className="menu-item calendar-menu-item"
-              onClick={() => {
-                setCurrentView('calendar')
-                setShowBurgerMenu(false)
-              }}
-            >
-              <TbCalendar />
-              <span>Calendar View</span>
-            </button>
-            
-            <button 
-              className="menu-item about-menu-item"
-              onClick={() => {
-                setShowAbout(true)
-                setShowBurgerMenu(false)
-              }}
-            >
-              <TbInfoSquare />
-              <span>About</span>
-            </button>
-          </div>
-        )}
-      </header>
+      <SettingsMenu
+        showBurgerMenu={showBurgerMenu}
+        isDarkMode={isDarkMode}
+        activities={activities}
+        onToggleMenu={() => setShowBurgerMenu(!showBurgerMenu)}
+        onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+        onExportData={exportData}
+        onImportData={importData}
+        onShowCalendar={() => setCurrentView('calendar')}
+        onShowAbout={() => setShowAbout(true)}
+        onCloseMenu={() => setShowBurgerMenu(false)}
+      />
 
       <main className="main-content">
         {currentView === 'activities' ? (
@@ -889,45 +833,7 @@ function App() {
       
       {/* About Modal */}
       {showAbout && (
-        <div className="about-modal" onClick={() => setShowAbout(false)}>
-          <div className="about-content" onClick={(e) => e.stopPropagation()}>
-            <div className="about-header">
-              <h2>About MamaLog</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowAbout(false)}
-                title="Close"
-              >
-                ×
-              </button>
-            </div>
-            <div className="about-body">
-              <p>
-                <strong>MamaLog</strong> is a simple, privacy-focused baby activity tracker. 
-                It helps parents log feedings, diaper changes, and sleep patterns without collecting 
-                or sharing personal data. All information stays on your device, and you can 
-                choose to export it if you want a backup or to move it to another device.
-              </p>
-              
-              <div className="about-section">
-                <h3>Features</h3>
-                <ul>
-                  <li>Track feeding sessions (breastfeeding with left/right/bottle options)</li>
-                  <li>Log diaper changes (pee, poo, or both)</li>
-                  <li>Monitor sleep patterns with duration tracking</li>
-                  <li>Edit activity history with original data preservation</li>
-                  <li>Export/import data for backup and device sync</li>
-                  <li>Dark/light theme support</li>
-                </ul>
-              </div>
-              
-              <div className="about-section">
-                <h3>Version</h3>
-                <p>MamaLog v1.0.0</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AboutModal onClose={() => setShowAbout(false)} />
       )}
       
       {/* Day Detail Modal */}
@@ -960,15 +866,7 @@ function App() {
       
       {/* Undo Toast */}
       {recentlyDeleted && (
-        <div className="undo-toast">
-          <span>Activity deleted</span>
-          <button 
-            className="undo-btn"
-            onClick={undoDelete}
-          >
-            Undo
-          </button>
-        </div>
+        <UndoToast onUndo={undoDelete} />
       )}
     </div>
   )
