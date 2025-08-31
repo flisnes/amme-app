@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar } from 'react-icons/tb'
+import { TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar } from 'react-icons/tb'
 import './App.css'
 import type { Activity, ActivityType } from './types/Activity'
 import { useActivities } from './hooks/useActivities'
 import { ActivityItem } from './components/ActivityItem'
 import { Calendar } from './components/Calendar'
+import { ActivityControls } from './components/ActivityControls'
 import { formatTime, formatDuration, formatLiveDuration, formatTimeForInput, parseTimeFromInput, isToday, isYesterday, isTodayOrYesterday, getActivitiesForDay } from './utils/dateUtils'
 import { getActivityIcon, getActivityLabel } from './utils/activityUtils'
 
@@ -139,8 +140,6 @@ function App() {
       if (timeoutId) window.clearTimeout(timeoutId)
     }
   }, [currentActivity?.type])
-  const [showDiaperOptions, setShowDiaperOptions] = useState(false)
-  const [showFeedingOptions, setShowFeedingOptions] = useState(false)
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -170,47 +169,21 @@ function App() {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
   }, [isDarkMode])
 
-  // Activity button click handlers (keeping UI state management here)
+  // Activity button click handlers (simplified - options handled in ActivityControls)
   const handleActivityClick = (type: ActivityType) => {
-    if (type === 'breastfeeding') {
-      // Close diaper options if they're open
-      setShowDiaperOptions(false)
-      
-      if (currentActivity?.type === 'breastfeeding') {
-        stopActivity()
-      } else {
-        setShowFeedingOptions(true)
-      }
-    } else if (type === 'diaper') {
-      // Close feeding options if they're open
-      setShowFeedingOptions(false)
-      
-      setShowDiaperOptions(true)
+    if (currentActivity?.type === type) {
+      stopActivity()
     } else {
-      // Close both option modals if user clicks another button
-      setShowFeedingOptions(false)
-      setShowDiaperOptions(false)
-      
-      if (type === 'sleep') {
-        if (currentActivity?.type === 'sleep') {
-          stopActivity()
-        } else {
-          startActivity(type)
-        }
-      }
+      startActivity(type)
     }
   }
 
   const handleStartActivity = (type: ActivityType, feedingType?: 'left' | 'right' | 'bottle') => {
     startActivity(type, feedingType)
-    // Close feeding options if they were open
-    setShowFeedingOptions(false)
   }
 
   const handleAddQuickActivity = (type: ActivityType, diaperType?: 'pee' | 'poo' | 'both') => {
     addQuickActivity(type, diaperType)
-    // Close diaper options if they were open
-    setShowDiaperOptions(false)
   }
 
   // Wrapper for formatLiveDuration with current time
@@ -590,119 +563,13 @@ function App() {
       <main className="main-content">
         {currentView === 'activities' ? (
           <div className="activities-view">
-            <div className="button-grid">
-          <button 
-            className={`activity-btn ${currentActivity?.type === 'breastfeeding' ? 'active' : ''}`}
-            onClick={() => handleActivityClick('breastfeeding')}
-          >
-            <span 
-              className={`activity-icon ${currentActivity?.type === 'breastfeeding' ? 'activity-icon-animated feeding' : ''}`}
-              ref={currentActivity?.type === 'breastfeeding' ? feedingIconRef : null}
-            >
-              <TbBottle size={24} />
-              {currentActivity?.type === 'breastfeeding' && (
-                <div className="feeding-emitter" />
-              )}
-            </span>
-            <span className="activity-label">
-              {currentActivity?.type === 'breastfeeding' ? 'Stop Feeding' : 'Start Feeding'}
-            </span>
-          </button>
-          
-          <button 
-            className="activity-btn"
-            onClick={() => handleActivityClick('diaper')}
-          >
-            <span className="activity-icon"><TbDiaper size={24} /></span>
-            <span className="activity-label">Diaper</span>
-          </button>
-          
-          <button 
-            className={`activity-btn ${currentActivity?.type === 'sleep' ? 'active' : ''}`}
-            onClick={() => handleActivityClick('sleep')}
-          >
-            <span className={`activity-icon ${currentActivity?.type === 'sleep' ? 'activity-icon-animated sleeping' : ''}`}>
-              <TbMoon size={24} />
-              {currentActivity?.type === 'sleep' && (
-                <>
-                  <span className="floating-z z1">z</span>
-                  <span className="floating-z z2">z</span>
-                  <span className="floating-z z3">Z</span>
-                </>
-              )}
-            </span>
-            <span className="activity-label">
-              {currentActivity?.type === 'sleep' ? 'Stop Sleep' : 'Start Sleep'}
-            </span>
-          </button>
-        </div>
-
-
-        {showDiaperOptions && (
-          <div className="diaper-options">
-            <h3>What type of diaper change?</h3>
-            <div className="diaper-buttons">
-              <button 
-                className="diaper-type-btn pee"
-                onClick={() => handleAddQuickActivity('diaper', 'pee')}
-              >
-                <TbDroplet size={20} /> Pee
-              </button>
-              <button 
-                className="diaper-type-btn poo"
-                onClick={() => handleAddQuickActivity('diaper', 'poo')}
-              >
-                <TbPoo size={20} /> Poo
-              </button>
-              <button 
-                className="diaper-type-btn both"
-                onClick={() => handleAddQuickActivity('diaper', 'both')}
-              >
-                <TbDroplet size={16} /><TbPoo size={16} /> Both
-              </button>
-            </div>
-            <button 
-              className="cancel-diaper-btn"
-              onClick={() => setShowDiaperOptions(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
-        {showFeedingOptions && (
-          <div className="feeding-options">
-            <h3>What type of feeding?</h3>
-            <div className="feeding-buttons">
-              <div className="breast-buttons">
-                <button 
-                  className="feeding-type-btn left"
-                  onClick={() => handleStartActivity('breastfeeding', 'left')}
-                >
-                  <TbArrowBigLeft size={20} /> Left Breast
-                </button>
-                <button 
-                  className="feeding-type-btn right"
-                  onClick={() => handleStartActivity('breastfeeding', 'right')}
-                >
-                  Right Breast <TbArrowBigRight size={20} />
-                </button>
-              </div>
-              <button 
-                className="feeding-type-btn bottle"
-                onClick={() => handleStartActivity('breastfeeding', 'bottle')}
-              >
-                <TbBabyBottle size={20} /> Bottle
-              </button>
-            </div>
-            <button 
-              className="cancel-feeding-btn"
-              onClick={() => setShowFeedingOptions(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+            <ActivityControls
+              currentActivity={currentActivity}
+              feedingIconRef={feedingIconRef}
+              onActivityClick={handleActivityClick}
+              onStartActivity={handleStartActivity}
+              onAddQuickActivity={handleAddQuickActivity}
+            />
 
         <div className="activity-log">
           {todayActivities.length > 0 && (
