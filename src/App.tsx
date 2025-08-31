@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar, TbChevronLeft, TbChevronRight } from 'react-icons/tb'
+import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar } from 'react-icons/tb'
 import './App.css'
 import type { Activity, ActivityType } from './types/Activity'
 import { useActivities } from './hooks/useActivities'
 import { ActivityItem } from './components/ActivityItem'
+import { Calendar } from './components/Calendar'
 
 function App() {
   // Use custom hook for activity management
@@ -26,7 +27,6 @@ function App() {
   const [showBurgerMenu, setShowBurgerMenu] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [currentView, setCurrentView] = useState<'activities' | 'calendar'>('activities')
-  const [calendarDate, setCalendarDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   // Unified touch gesture system
   const [touchState, setTouchState] = useState<{
@@ -578,74 +578,6 @@ function App() {
   }
 
 
-  // Calculate daily activity summaries
-  const getDailySummary = (date: Date) => {
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
-
-    const dayActivities = activities.filter(activity => {
-      const activityDate = new Date(activity.startTime)
-      return activityDate >= startOfDay && activityDate <= endOfDay
-    })
-
-    const summary = {
-      feedings: dayActivities.filter(a => a.type === 'breastfeeding').length,
-      diapers: dayActivities.filter(a => a.type === 'diaper').length,
-      sleepDuration: 0
-    }
-
-    // Calculate total sleep duration
-    const sleepActivities = dayActivities.filter(a => a.type === 'sleep' && a.endTime)
-    summary.sleepDuration = sleepActivities.reduce((total, activity) => {
-      if (activity.endTime) {
-        return total + (activity.endTime.getTime() - activity.startTime.getTime())
-      }
-      return total
-    }, 0)
-
-    return summary
-  }
-
-  // Calendar helper functions
-  const getCalendarDays = (date: Date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth()
-    
-    // First day of the month
-    const firstDay = new Date(year, month, 1)
-    // Last day of the month
-    const lastDay = new Date(year, month + 1, 0)
-    
-    // First day of the week for the calendar (Sunday = 0)
-    const firstCalendarDay = new Date(firstDay)
-    firstCalendarDay.setDate(firstCalendarDay.getDate() - firstDay.getDay())
-    
-    const days = []
-    const currentDate = new Date(firstCalendarDay)
-    
-    // Generate 42 days (6 weeks)
-    for (let i = 0; i < 42; i++) {
-      days.push(new Date(currentDate))
-      currentDate.setDate(currentDate.getDate() + 1)
-    }
-    
-    return { days, month, year, firstDay, lastDay }
-  }
-
-  const formatDurationHours = (ms: number) => {
-    const hours = Math.floor(ms / (1000 * 60 * 60))
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
-    
-    if (hours > 0) {
-      return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`
-    } else if (minutes > 0) {
-      return `${minutes}m`
-    } else {
-      return '0m'
-    }
-  }
 
   // Get activities for a specific day
   const getActivitiesForDay = (date: Date) => {
@@ -658,13 +590,6 @@ function App() {
       const activityDate = new Date(activity.startTime)
       return activityDate >= startOfDay && activityDate <= endOfDay
     }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-  }
-
-  // Handle calendar day click
-  const handleDayClick = (day: Date, isCurrentMonth: boolean, hasActivities: boolean) => {
-    if (isCurrentMonth && hasActivities) {
-      setSelectedDay(day)
-    }
   }
 
   const todayActivities = activities.filter(activity => isToday(activity.startTime))
@@ -1179,93 +1104,11 @@ function App() {
         )}
           </div>
         ) : (
-          <div className="calendar-view">
-            <div className="calendar-header">
-              <button 
-                className="calendar-nav-btn"
-                onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
-              >
-                <TbChevronLeft />
-              </button>
-              <h2 className="calendar-title">
-                {calendarDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
-              </h2>
-              <button 
-                className="calendar-nav-btn"
-                onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
-              >
-                <TbChevronRight />
-              </button>
-            </div>
-
-            <div className="calendar-grid">
-              <div className="calendar-weekdays">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="weekday">{day}</div>
-                ))}
-              </div>
-              
-              <div className="calendar-days">
-                {getCalendarDays(calendarDate).days.map((day, index) => {
-                  const summary = getDailySummary(day)
-                  const isCurrentMonth = day.getMonth() === calendarDate.getMonth()
-                  const isToday = day.toDateString() === new Date().toDateString()
-                  const hasActivities = summary.feedings > 0 || summary.diapers > 0 || summary.sleepDuration > 0
-
-                  return (
-                    <div 
-                      key={index} 
-                      className={`calendar-day ${isCurrentMonth ? 'current-month' : 'other-month'} ${isToday ? 'today' : ''} ${hasActivities ? 'has-activities clickable' : ''}`}
-                      onClick={() => handleDayClick(day, isCurrentMonth, hasActivities)}
-                    >
-                      <div className="day-number">{day.getDate()}</div>
-                      {isCurrentMonth && hasActivities && (
-                        <div className="day-summary">
-                          {summary.feedings > 0 && (
-                            <div className="summary-item feeding">
-                              <TbBottle size={10} />
-                              <span>{summary.feedings}</span>
-                            </div>
-                          )}
-                          {summary.diapers > 0 && (
-                            <div className="summary-item diaper">
-                              <TbDiaper size={10} />
-                              <span>{summary.diapers}</span>
-                            </div>
-                          )}
-                          {summary.sleepDuration > 0 && (
-                            <div className="summary-item sleep">
-                              <TbMoon size={10} />
-                              <span>{formatDurationHours(summary.sleepDuration)}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="calendar-legend">
-              <div className="legend-item">
-                <TbBottle size={14} />
-                <span>Feedings</span>
-              </div>
-              <div className="legend-item">
-                <TbDiaper size={14} />
-                <span>Diapers</span>
-              </div>
-              <div className="legend-item">
-                <TbMoon size={14} />
-                <span>Sleep</span>
-              </div>
-            </div>
-            
-            <div className="view-hint">
-              <p>Swipe right to return to activities view</p>
-            </div>
-          </div>
+          <Calendar 
+            activities={activities}
+            selectedDay={selectedDay}
+            setSelectedDay={setSelectedDay}
+          />
         )}
       </main>
       
