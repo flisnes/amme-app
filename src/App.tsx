@@ -5,6 +5,8 @@ import type { Activity, ActivityType } from './types/Activity'
 import { useActivities } from './hooks/useActivities'
 import { ActivityItem } from './components/ActivityItem'
 import { Calendar } from './components/Calendar'
+import { formatTime, formatDuration, formatLiveDuration, formatTimeForInput, parseTimeFromInput, isToday, isYesterday, isTodayOrYesterday, getActivitiesForDay } from './utils/dateUtils'
+import { getActivityIcon, getActivityLabel } from './utils/activityUtils'
 
 function App() {
   // Use custom hook for activity management
@@ -211,80 +213,15 @@ function App() {
     setShowDiaperOptions(false)
   }
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  // Wrapper for formatLiveDuration with current time
+  const formatLiveDurationWrapper = (startTime: Date) => {
+    return formatLiveDuration(startTime, currentTime)
   }
 
-  const formatDuration = (start: Date, end: Date) => {
-    const diff = end.getTime() - start.getTime()
-    const hours = Math.floor(diff / 3600000)
-    const minutes = Math.floor((diff % 3600000) / 60000)
-    const seconds = Math.floor((diff % 60000) / 1000)
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${seconds}s`
-    } else {
-      return `${minutes}m ${seconds}s`
-    }
+  // Wrapper for getActivitiesForDay with activities
+  const getActivitiesForSelectedDay = (day: Date) => {
+    return getActivitiesForDay(activities, day)
   }
-  
-  const formatLiveDuration = (startTime: Date) => {
-    const diffMs = currentTime.getTime() - startTime.getTime()
-    const hours = Math.floor(diffMs / (1000 * 60 * 60))
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000)
-    
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }
-
-  const getActivityIcon = (type: ActivityType) => {
-    switch (type) {
-      case 'breastfeeding': return <TbBottle size={20} />
-      case 'diaper': return <TbDiaper size={20} />
-      case 'sleep': return <TbMoon size={20} />
-      default: return '📝'
-    }
-  }
-
-  const getActivityLabel = (activity: Activity) => {
-    switch (activity.type) {
-      case 'breastfeeding': 
-        if (activity.feedingType) {
-          return `Feeding (${activity.feedingType})`
-        }
-        return 'Feeding'
-      case 'diaper': 
-        if (activity.diaperType) {
-          return `Diaper (${activity.diaperType})`
-        }
-        return 'Diaper'
-      case 'sleep': return 'Sleep'
-      default: return 'Activity'
-    }
-  }
-
-  const formatTimeForInput = (date: Date) => {
-    // Format for datetime-local input (YYYY-MM-DDTHH:MM) in local timezone
-    const year = date.getFullYear()
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const day = date.getDate().toString().padStart(2, '0')
-    const hours = date.getHours().toString().padStart(2, '0')
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`
-  }
-
-  const parseTimeFromInput = (timeString: string) => {
-    // Parse datetime-local input as local time consistently across environments
-    // Split the datetime-local format: "YYYY-MM-DDTHH:MM"
-    const [datePart, timePart] = timeString.split('T')
-    const [year, month, day] = datePart.split('-').map(Number)
-    const [hours, minutes] = timePart.split(':').map(Number)
-    
-    // Create date object with explicit local time components
-    return new Date(year, month - 1, day, hours, minutes, 0, 0)
-  }
-  
 
   // Unified touch gesture handlers
   const handleGlobalTouchStart = (e: React.TouchEvent) => {
@@ -436,20 +373,6 @@ function App() {
 
 
 
-  const isToday = (date: Date) => {
-    const today = new Date()
-    return date.toDateString() === today.toDateString()
-  }
-
-  const isYesterday = (date: Date) => {
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    return date.toDateString() === yesterday.toDateString()
-  }
-
-  const isTodayOrYesterday = (date: Date) => {
-    return isToday(date) || isYesterday(date)
-  }
 
   const formatDate = (date: Date) => {
     const today = new Date()
@@ -579,18 +502,6 @@ function App() {
 
 
 
-  // Get activities for a specific day
-  const getActivitiesForDay = (date: Date) => {
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
-
-    return activities.filter(activity => {
-      const activityDate = new Date(activity.startTime)
-      return activityDate >= startOfDay && activityDate <= endOfDay
-    }).sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-  }
 
   const todayActivities = activities.filter(activity => isToday(activity.startTime))
   const yesterdayActivities = activities.filter(activity => isYesterday(activity.startTime))
@@ -814,7 +725,7 @@ function App() {
                     getActivityLabel={getActivityLabel}
                     formatTime={formatTime}
                     formatDuration={formatDuration}
-                    formatLiveDuration={formatLiveDuration}
+                    formatLiveDuration={formatLiveDurationWrapper}
                     formatTimeForInput={formatTimeForInput}
                     parseTimeFromInput={parseTimeFromInput}
                     updateActivityData={updateActivityData}
@@ -848,7 +759,7 @@ function App() {
                     getActivityLabel={getActivityLabel}
                     formatTime={formatTime}
                     formatDuration={formatDuration}
-                    formatLiveDuration={formatLiveDuration}
+                    formatLiveDuration={formatLiveDurationWrapper}
                     formatTimeForInput={formatTimeForInput}
                     parseTimeFromInput={parseTimeFromInput}
                     updateActivityData={updateActivityData}
@@ -1176,7 +1087,7 @@ function App() {
             </div>
             
             <div className="day-detail-activities">
-              {getActivitiesForDay(selectedDay).map(activity => (
+              {getActivitiesForSelectedDay(selectedDay!).map(activity => (
                 <div key={activity.id} className="day-activity-item">
                   <div
                     className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
@@ -1328,7 +1239,7 @@ function App() {
                                   </span>
                                 ) : (
                                   <span className="duration">
-                                    ({formatLiveDuration(activity.startTime)})
+                                    ({formatLiveDurationWrapper(activity.startTime)})
                                   </span>
                                 )}
                               </>
@@ -1394,7 +1305,7 @@ function App() {
                 </div>
               ))}
               
-              {getActivitiesForDay(selectedDay).length === 0 && (
+              {getActivitiesForSelectedDay(selectedDay!).length === 0 && (
                 <div className="no-activities">
                   <p>No activities logged for this day.</p>
                 </div>
