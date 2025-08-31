@@ -350,6 +350,31 @@
   font-family: inherit;
 }
 
+.edit-row input[type="datetime-local"] {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  color-scheme: light dark; /* This helps with calendar icon color */
+}
+
+/* Ensure datetime-local calendar icon follows theme */
+:root[data-theme="dark"] .edit-row input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+.edit-row textarea {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  flex: 1;
+  margin-left: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
 .edit-row select {
   cursor: pointer;
 }
