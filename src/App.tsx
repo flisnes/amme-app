@@ -1058,7 +1058,8 @@ function App() {
                         <button 
                           className="delete-btn"
                           onClick={() => deleteActivity(activity.id)}
-                          title="Delete activity"
+                          title={activity.endTime ? "Delete activity" : "Cannot delete ongoing activity"}
+                          disabled={!activity.endTime}
                         >
                           <TbTrash />
                         </button>
@@ -1089,6 +1090,13 @@ function App() {
                           value={formatTimeForInput(activity.startTime)}
                           onChange={(e) => {
                             const newStartTime = parseTimeFromInput(e.target.value)
+                            const now = new Date()
+                            
+                            // For ongoing activities (no end time), prevent setting future start times
+                            if (!activity.endTime && newStartTime > now) {
+                              return // Don't allow future start times for ongoing activities
+                            }
+                            
                             // Ensure start time is not after end time
                             if (activity.endTime && newStartTime > activity.endTime) {
                               // If start time is after end time, also update end time
@@ -1270,7 +1278,8 @@ function App() {
                         <button 
                           className="delete-btn"
                           onClick={() => deleteActivity(activity.id)}
-                          title="Delete activity"
+                          title={activity.endTime ? "Delete activity" : "Cannot delete ongoing activity"}
+                          disabled={!activity.endTime}
                         >
                           <TbTrash />
                         </button>
@@ -1301,6 +1310,13 @@ function App() {
                           value={formatTimeForInput(activity.startTime)}
                           onChange={(e) => {
                             const newStartTime = parseTimeFromInput(e.target.value)
+                            const now = new Date()
+                            
+                            // For ongoing activities (no end time), prevent setting future start times
+                            if (!activity.endTime && newStartTime > now) {
+                              return // Don't allow future start times for ongoing activities
+                            }
+                            
                             // Ensure start time is not after end time
                             if (activity.endTime && newStartTime > activity.endTime) {
                               // If start time is after end time, also update end time
@@ -1865,7 +1881,8 @@ function App() {
                         <button 
                           className="delete-btn"
                           onClick={() => deleteActivity(activity.id)}
-                          title="Delete activity"
+                          title={activity.endTime ? "Delete activity" : "Cannot delete ongoing activity"}
+                          disabled={!activity.endTime}
                         >
                           <TbTrash />
                         </button>
@@ -1894,6 +1911,13 @@ function App() {
                           value={formatTimeForInput(activity.startTime)}
                           onChange={(e) => {
                             const newStartTime = parseTimeFromInput(e.target.value)
+                            const now = new Date()
+                            
+                            // For ongoing activities (no end time), prevent setting future start times
+                            if (!activity.endTime && newStartTime > now) {
+                              return // Don't allow future start times for ongoing activities
+                            }
+                            
                             if (activity.endTime && newStartTime > activity.endTime) {
                               updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
                             } else {

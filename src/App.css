@@ -300,9 +300,14 @@
   color: var(--accent-diaper-text);
 }
 
-.delete-btn:hover {
+.delete-btn:hover:not(:disabled) {
   background: var(--accent-orange);
   color: var(--accent-orange-text);
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .edit-form {
