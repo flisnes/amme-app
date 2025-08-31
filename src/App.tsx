@@ -17,6 +17,7 @@ interface Activity {
   originalEndTime?: Date
   originalDiaperType?: 'pee' | 'poo' | 'both'
   originalFeedingType?: 'left' | 'right' | 'bottle'
+  originalNotes?: string
 }
 
 function App() {
@@ -380,7 +381,7 @@ function App() {
     setRecentlyDeleted(null)
   }
 
-  const updateActivity = (id: string, updates: Partial<Activity>) => {
+  const updateActivityData = (id: string, updates: Partial<Activity>) => {
     setActivities(prev => {
       const updatedActivities = prev.map(activity => {
         if (activity.id === id) {
@@ -398,6 +399,9 @@ function App() {
           if (!activity.originalFeedingType && activity.feedingType) {
             originalData.originalFeedingType = activity.feedingType
           }
+          if (!activity.originalNotes && activity.notes) {
+            originalData.originalNotes = activity.notes
+          }
           
           return { ...activity, ...originalData, ...updates }
         }
@@ -407,8 +411,8 @@ function App() {
       // Re-sort activities by start time (newest first) to maintain chronological order
       return updatedActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
     })
-    setEditingActivity(null)
   }
+
 
   const formatTimeForInput = (date: Date) => {
     // Format for datetime-local input (YYYY-MM-DDTHH:MM) in local timezone
@@ -1086,9 +1090,9 @@ function App() {
                               // Ensure end time is not before start time
                               if (newEndTime < activity.startTime) {
                                 // If end time is before start time, also update start time
-                                updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                                updateActivityData(activity.id, { startTime: newEndTime, endTime: newEndTime })
                               } else {
-                                updateActivity(activity.id, { endTime: newEndTime })
+                                updateActivityData(activity.id, { endTime: newEndTime })
                               }
                             }}
                           />
@@ -1111,9 +1115,9 @@ function App() {
                             // Ensure start time is not after end time
                             if (activity.endTime && newStartTime > activity.endTime) {
                               // If start time is after end time, also update end time
-                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                              updateActivityData(activity.id, { startTime: newStartTime, endTime: newStartTime })
                             } else {
-                              updateActivity(activity.id, { startTime: newStartTime })
+                              updateActivityData(activity.id, { startTime: newStartTime })
                             }
                           }}
                         />
@@ -1124,7 +1128,7 @@ function App() {
                           <select
                             value={activity.feedingType || 'left'}
                             onChange={(e) => {
-                              updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                              updateActivityData(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
                             }}
                           >
                             <option value="left">Left Breast</option>
@@ -1139,7 +1143,7 @@ function App() {
                           <select
                             value={activity.diaperType || 'pee'}
                             onChange={(e) => {
-                              updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                              updateActivityData(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                             }}
                           >
                             <option value="pee">Pee</option>
@@ -1148,6 +1152,17 @@ function App() {
                           </select>
                         </div>
                       )}
+                      <div className="edit-row">
+                        <label>Notes:</label>
+                        <textarea
+                          value={activity.notes || ''}
+                          onChange={(e) => {
+                            updateActivityData(activity.id, { notes: e.target.value })
+                          }}
+                          placeholder=" ..."
+                          rows={2}
+                        />
+                      </div>
                       <div className="edit-actions">
                         <button 
                           className="save-btn"
@@ -1306,9 +1321,9 @@ function App() {
                               // Ensure end time is not before start time
                               if (newEndTime < activity.startTime) {
                                 // If end time is before start time, also update start time
-                                updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                                updateActivityData(activity.id, { startTime: newEndTime, endTime: newEndTime })
                               } else {
-                                updateActivity(activity.id, { endTime: newEndTime })
+                                updateActivityData(activity.id, { endTime: newEndTime })
                               }
                             }}
                           />
@@ -1331,9 +1346,9 @@ function App() {
                             // Ensure start time is not after end time
                             if (activity.endTime && newStartTime > activity.endTime) {
                               // If start time is after end time, also update end time
-                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                              updateActivityData(activity.id, { startTime: newStartTime, endTime: newStartTime })
                             } else {
-                              updateActivity(activity.id, { startTime: newStartTime })
+                              updateActivityData(activity.id, { startTime: newStartTime })
                             }
                           }}
                         />
@@ -1344,7 +1359,7 @@ function App() {
                           <select
                             value={activity.feedingType || 'left'}
                             onChange={(e) => {
-                              updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                              updateActivityData(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
                             }}
                           >
                             <option value="left">Left Breast</option>
@@ -1359,7 +1374,7 @@ function App() {
                           <select
                             value={activity.diaperType || 'pee'}
                             onChange={(e) => {
-                              updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                              updateActivityData(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                             }}
                           >
                             <option value="pee">Pee</option>
@@ -1368,6 +1383,17 @@ function App() {
                           </select>
                         </div>
                       )}
+                      <div className="edit-row">
+                        <label>Notes:</label>
+                        <textarea
+                          value={activity.notes || ''}
+                          onChange={(e) => {
+                            updateActivityData(activity.id, { notes: e.target.value })
+                          }}
+                          placeholder=" ..."
+                          rows={2}
+                        />
+                      </div>
                       <div className="edit-actions">
                         <button 
                           className="save-btn"
@@ -1546,9 +1572,9 @@ function App() {
                                       // Ensure end time is not before start time
                                       if (newEndTime < activity.startTime) {
                                         // If end time is before start time, also update start time
-                                        updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                                        updateActivityData(activity.id, { startTime: newEndTime, endTime: newEndTime })
                                       } else {
-                                        updateActivity(activity.id, { endTime: newEndTime })
+                                        updateActivityData(activity.id, { endTime: newEndTime })
                                       }
                                     }}
                                   />
@@ -1564,9 +1590,9 @@ function App() {
                                     // Ensure start time is not after end time
                                     if (activity.endTime && newStartTime > activity.endTime) {
                                       // If start time is after end time, also update end time
-                                      updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                                      updateActivityData(activity.id, { startTime: newStartTime, endTime: newStartTime })
                                     } else {
-                                      updateActivity(activity.id, { startTime: newStartTime })
+                                      updateActivityData(activity.id, { startTime: newStartTime })
                                     }
                                   }}
                                 />
@@ -1577,7 +1603,7 @@ function App() {
                                   <select
                                     value={activity.feedingType || 'left'}
                                     onChange={(e) => {
-                                      updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                                      updateActivityData(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
                                     }}
                                   >
                                     <option value="left">Left Breast</option>
@@ -1592,7 +1618,7 @@ function App() {
                                   <select
                                     value={activity.diaperType || 'pee'}
                                     onChange={(e) => {
-                                      updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                                      updateActivityData(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                                     }}
                                   >
                                     <option value="pee">Pee</option>
@@ -1601,6 +1627,17 @@ function App() {
                                   </select>
                                 </div>
                               )}
+                              <div className="edit-row">
+                                <label>Notes:</label>
+                                <textarea
+                                  value={activity.notes || ''}
+                                  onChange={(e) => {
+                                    updateActivityData(activity.id, { notes: e.target.value })
+                                  }}
+                                  placeholder=" ..."
+                                  rows={2}
+                                />
+                              </div>
                               <div className="edit-actions">
                                 <button 
                                   className="save-btn"
@@ -1907,9 +1944,9 @@ function App() {
                             onChange={(e) => {
                               const newEndTime = parseTimeFromInput(e.target.value)
                               if (newEndTime < activity.startTime) {
-                                updateActivity(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                                updateActivityData(activity.id, { startTime: newEndTime, endTime: newEndTime })
                               } else {
-                                updateActivity(activity.id, { endTime: newEndTime })
+                                updateActivityData(activity.id, { endTime: newEndTime })
                               }
                             }}
                           />
@@ -1930,9 +1967,9 @@ function App() {
                             }
                             
                             if (activity.endTime && newStartTime > activity.endTime) {
-                              updateActivity(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                              updateActivityData(activity.id, { startTime: newStartTime, endTime: newStartTime })
                             } else {
-                              updateActivity(activity.id, { startTime: newStartTime })
+                              updateActivityData(activity.id, { startTime: newStartTime })
                             }
                           }}
                         />
@@ -1943,7 +1980,7 @@ function App() {
                           <select
                             value={activity.feedingType || 'left'}
                             onChange={(e) => {
-                              updateActivity(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                              updateActivityData(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
                             }}
                           >
                             <option value="left">Left Breast</option>
@@ -1958,7 +1995,7 @@ function App() {
                           <select
                             value={activity.diaperType || 'pee'}
                             onChange={(e) => {
-                              updateActivity(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                              updateActivityData(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                             }}
                           >
                             <option value="pee">Pee</option>
@@ -1967,6 +2004,17 @@ function App() {
                           </select>
                         </div>
                       )}
+                      <div className="edit-row">
+                        <label>Notes:</label>
+                        <textarea
+                          value={activity.notes || ''}
+                          onChange={(e) => {
+                            updateActivityData(activity.id, { notes: e.target.value })
+                          }}
+                          placeholder=" ..."
+                          rows={2}
+                        />
+                      </div>
                       <div className="edit-actions">
                         <button 
                           className="save-btn"
