@@ -1,28 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
 import { TbDiaper, TbBottle, TbMoon, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDroplet, TbPoo, TbTrash, TbEdit, TbInfoCircle, TbDownload, TbUpload, TbMenu2, TbInfoSquare, TbCalendar, TbChevronLeft, TbChevronRight } from 'react-icons/tb'
 import './App.css'
-
-type ActivityType = 'breastfeeding' | 'diaper' | 'sleep'
-
-interface Activity {
-  id: string
-  type: ActivityType
-  startTime: Date
-  endTime?: Date
-  notes?: string
-  diaperType?: 'pee' | 'poo' | 'both'
-  feedingType?: 'left' | 'right' | 'bottle'
-  // Original data to track changes
-  originalStartTime?: Date
-  originalEndTime?: Date
-  originalDiaperType?: 'pee' | 'poo' | 'both'
-  originalFeedingType?: 'left' | 'right' | 'bottle'
-  originalNotes?: string
-}
+import type { Activity, ActivityType } from './types/Activity'
+import { useActivities } from './hooks/useActivities'
 
 function App() {
-  const [currentActivity, setCurrentActivity] = useState<Activity | null>(null)
-  const [activities, setActivities] = useState<Activity[]>([])
+  // Use custom hook for activity management
+  const {
+    activities,
+    currentActivity,
+    recentlyDeleted,
+    startActivity,
+    stopActivity,
+    addQuickActivity,
+    updateActivityData,
+    deleteActivity,
+    undoDelete,
+    importActivities
+  } = useActivities()
+
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
@@ -53,7 +49,6 @@ function App() {
     gestureType: 'none'
   })
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
-  const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
   const feedingIconRef = useRef<HTMLSpanElement>(null)
   
@@ -146,26 +141,7 @@ function App() {
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    const savedActivities = localStorage.getItem('babyTracker_activities')
-    const savedCurrentActivity = localStorage.getItem('babyTracker_currentActivity')
     const savedDarkMode = localStorage.getItem('babyTracker_darkMode')
-    
-    if (savedActivities) {
-      const parsed = JSON.parse(savedActivities).map((activity: any) => ({
-        ...activity,
-        startTime: new Date(activity.startTime),
-        endTime: activity.endTime ? new Date(activity.endTime) : undefined
-      }))
-      setActivities(parsed)
-    }
-    
-    if (savedCurrentActivity) {
-      const parsed = JSON.parse(savedCurrentActivity)
-      setCurrentActivity({
-        ...parsed,
-        startTime: new Date(parsed.startTime)
-      })
-    }
     
     if (savedDarkMode) {
       setIsDarkMode(JSON.parse(savedDarkMode))
@@ -185,95 +161,51 @@ function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showBurgerMenu])
 
-  useEffect(() => {
-    localStorage.setItem('babyTracker_activities', JSON.stringify(activities))
-  }, [activities])
-
-  useEffect(() => {
-    if (currentActivity) {
-      localStorage.setItem('babyTracker_currentActivity', JSON.stringify(currentActivity))
-    } else {
-      localStorage.removeItem('babyTracker_currentActivity')
-    }
-  }, [currentActivity])
 
   useEffect(() => {
     localStorage.setItem('babyTracker_darkMode', JSON.stringify(isDarkMode))
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
   }, [isDarkMode])
 
-  const startActivity = (type: ActivityType, feedingType?: 'left' | 'right' | 'bottle') => {
-    // If there's already a current activity, stop it first
-    if (currentActivity) {
-      const completedActivity = {
-        ...currentActivity,
-        endTime: new Date()
+  // Activity button click handlers (keeping UI state management here)
+  const handleActivityClick = (type: ActivityType) => {
+    if (type === 'breastfeeding') {
+      // Close diaper options if they're open
+      setShowDiaperOptions(false)
+      
+      if (currentActivity?.type === 'breastfeeding') {
+        stopActivity()
+      } else {
+        setShowFeedingOptions(true)
       }
-      setActivities(prev => prev.map(activity => 
-        activity.id === currentActivity.id ? completedActivity : activity
-      ))
+    } else if (type === 'diaper') {
+      // Close feeding options if they're open
+      setShowFeedingOptions(false)
+      
+      setShowDiaperOptions(true)
+    } else {
+      // Close both option modals if user clicks another button
+      setShowFeedingOptions(false)
+      setShowDiaperOptions(false)
+      
+      if (type === 'sleep') {
+        if (currentActivity?.type === 'sleep') {
+          stopActivity()
+        } else {
+          startActivity(type)
+        }
+      }
     }
+  }
 
-    // Start the new activity
-    const activity: Activity = {
-      id: Date.now().toString(),
-      type,
-      startTime: new Date(),
-      ...(type === 'breastfeeding' && feedingType ? { feedingType } : {})
-    }
-    setCurrentActivity(activity)
-    
-    // Immediately add the ongoing activity to the log
-    setActivities(prev => {
-      const newActivities = [activity, ...prev]
-      return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-    })
-    
+  const handleStartActivity = (type: ActivityType, feedingType?: 'left' | 'right' | 'bottle') => {
+    startActivity(type, feedingType)
     // Close feeding options if they were open
     setShowFeedingOptions(false)
   }
 
-  const stopActivity = () => {
-    if (currentActivity) {
-      const completedActivity = {
-        ...currentActivity,
-        endTime: new Date()
-      }
-      // Update the existing activity in the log with the end time
-      setActivities(prev => prev.map(activity => 
-        activity.id === currentActivity.id ? completedActivity : activity
-      ))
-      setCurrentActivity(null)
-    }
-  }
-
-  const addQuickActivity = (type: ActivityType, diaperType?: 'pee' | 'poo' | 'both') => {
-    // If there's a current activity (feeding/sleeping), stop it first
-    if (currentActivity) {
-      const completedActivity = {
-        ...currentActivity,
-        endTime: new Date()
-      }
-      setActivities(prev => prev.map(activity => 
-        activity.id === currentActivity.id ? completedActivity : activity
-      ))
-      setCurrentActivity(null)
-    }
-
-    // Add the new instant activity
-    const activity: Activity = {
-      id: Date.now().toString(),
-      type,
-      startTime: new Date(),
-      endTime: new Date(),
-      ...(type === 'diaper' && diaperType ? { diaperType } : {})
-    }
-    setActivities(prev => {
-      const newActivities = [activity, ...prev]
-      // Sort to maintain chronological order (newest first)
-      return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-    })
-    
+  const handleAddQuickActivity = (type: ActivityType, diaperType?: 'pee' | 'poo' | 'both') => {
+    addQuickActivity(type, diaperType)
     // Close diaper options if they were open
     setShowDiaperOptions(false)
   }
@@ -329,109 +261,6 @@ function App() {
       default: return 'Activity'
     }
   }
-
-  const handleActivityClick = (type: ActivityType) => {
-    if (type === 'breastfeeding') {
-      // Close diaper options if they're open
-      setShowDiaperOptions(false)
-      
-      if (currentActivity?.type === 'breastfeeding') {
-        stopActivity()
-      } else {
-        setShowFeedingOptions(true)
-      }
-    } else if (type === 'diaper') {
-      // Close feeding options if they're open
-      setShowFeedingOptions(false)
-      
-      setShowDiaperOptions(true)
-    } else {
-      // Close both option modals if user clicks another button
-      setShowFeedingOptions(false)
-      setShowDiaperOptions(false)
-      
-      if (type === 'sleep') {
-        if (currentActivity?.type === 'sleep') {
-          stopActivity()
-        } else {
-          startActivity(type)
-        }
-      }
-    }
-  }
-
-  const deleteActivity = (id: string) => {
-    const activityToDelete = activities.find(activity => activity.id === id)
-    if (!activityToDelete) return
-    
-    // Remove from activities list
-    setActivities(prev => prev.filter(activity => activity.id !== id))
-    
-    // Clear any existing undo timeout
-    if (recentlyDeleted?.timeoutId) {
-      clearTimeout(recentlyDeleted.timeoutId)
-    }
-    
-    // Set up new undo timeout (5 seconds)
-    const timeoutId = setTimeout(() => {
-      setRecentlyDeleted(null)
-    }, 5000)
-    
-    setRecentlyDeleted({
-      activity: activityToDelete,
-      timeoutId
-    })
-  }
-  
-  const undoDelete = () => {
-    if (!recentlyDeleted) return
-    
-    // Clear the timeout
-    clearTimeout(recentlyDeleted.timeoutId)
-    
-    // Restore the activity
-    setActivities(prev => {
-      const restored = [...prev, recentlyDeleted.activity]
-      // Sort by startTime to maintain chronological order
-      return restored.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-    })
-    
-    // Clear the recently deleted state
-    setRecentlyDeleted(null)
-  }
-
-  const updateActivityData = (id: string, updates: Partial<Activity>) => {
-    setActivities(prev => {
-      const updatedActivities = prev.map(activity => {
-        if (activity.id === id) {
-          // Store original values on first edit (if not already stored)
-          const originalData: Partial<Activity> = {}
-          if (!activity.originalStartTime) {
-            originalData.originalStartTime = activity.startTime
-          }
-          if (!activity.originalEndTime && activity.endTime) {
-            originalData.originalEndTime = activity.endTime
-          }
-          if (!activity.originalDiaperType && activity.diaperType) {
-            originalData.originalDiaperType = activity.diaperType
-          }
-          if (!activity.originalFeedingType && activity.feedingType) {
-            originalData.originalFeedingType = activity.feedingType
-          }
-          if (!activity.originalNotes && activity.notes) {
-            originalData.originalNotes = activity.notes
-          }
-          
-          return { ...activity, ...originalData, ...updates }
-        }
-        return activity
-      })
-      
-      // Re-sort activities by start time (newest first) to maintain chronological order
-      return updatedActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-    })
-  }
-
 
   const formatTimeForInput = (date: Date) => {
     // Format for datetime-local input (YYYY-MM-DDTHH:MM) in local timezone
@@ -726,20 +555,15 @@ function App() {
           originalEndTime: activity.originalEndTime ? new Date(activity.originalEndTime) : undefined
         }))
         
-        // Merge with existing activities (avoid duplicates by ID)
-        const existingIds = new Set(activities.map(a => a.id))
-        const newActivities = importedActivities.filter(a => !existingIds.has(a.id))
+        // Use hook function to import activities
+        const importedCount = importActivities(importedActivities)
         
-        if (newActivities.length === 0) {
+        if (importedCount === 0) {
           alert('No new activities found in the import file.')
           return
         }
         
-        const mergedActivities = [...activities, ...newActivities]
-          .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-        
-        setActivities(mergedActivities)
-        alert(`Successfully imported ${newActivities.length} new activities!`)
+        alert(`Successfully imported ${importedCount} new activities!`)
         
       } catch (error) {
         alert('Error reading file. Please ensure it\'s a valid MamaLog export file.')
@@ -983,19 +807,19 @@ function App() {
             <div className="diaper-buttons">
               <button 
                 className="diaper-type-btn pee"
-                onClick={() => addQuickActivity('diaper', 'pee')}
+                onClick={() => handleAddQuickActivity('diaper', 'pee')}
               >
                 <TbDroplet size={20} /> Pee
               </button>
               <button 
                 className="diaper-type-btn poo"
-                onClick={() => addQuickActivity('diaper', 'poo')}
+                onClick={() => handleAddQuickActivity('diaper', 'poo')}
               >
                 <TbPoo size={20} /> Poo
               </button>
               <button 
                 className="diaper-type-btn both"
-                onClick={() => addQuickActivity('diaper', 'both')}
+                onClick={() => handleAddQuickActivity('diaper', 'both')}
               >
                 <TbDroplet size={16} /><TbPoo size={16} /> Both
               </button>
@@ -1016,20 +840,20 @@ function App() {
               <div className="breast-buttons">
                 <button 
                   className="feeding-type-btn left"
-                  onClick={() => startActivity('breastfeeding', 'left')}
+                  onClick={() => handleStartActivity('breastfeeding', 'left')}
                 >
                   <TbArrowBigLeft size={20} /> Left Breast
                 </button>
                 <button 
                   className="feeding-type-btn right"
-                  onClick={() => startActivity('breastfeeding', 'right')}
+                  onClick={() => handleStartActivity('breastfeeding', 'right')}
                 >
                   Right Breast <TbArrowBigRight size={20} />
                 </button>
               </div>
               <button 
                 className="feeding-type-btn bottle"
-                onClick={() => startActivity('breastfeeding', 'bottle')}
+                onClick={() => handleStartActivity('breastfeeding', 'bottle')}
               >
                 <TbBabyBottle size={20} /> Bottle
               </button>
