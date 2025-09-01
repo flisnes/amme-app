@@ -1,12 +1,16 @@
-import { TbMenu2, TbDownload, TbUpload, TbCalendar, TbInfoSquare, TbList, TbSun, TbMoon } from 'react-icons/tb'
+import { TbMenu2, TbDownload, TbUpload, TbCalendar, TbInfoSquare, TbList, TbSun, TbMoon, TbPalette } from 'react-icons/tb'
+import type { ThemeName } from '../themes/themes'
+import { themesList } from '../themes/themes'
 
 interface SettingsMenuProps {
   showBurgerMenu: boolean
   isDarkMode: boolean
   activities: any[]
   currentView: 'activities' | 'calendar'
+  themeName: ThemeName
   onToggleMenu: () => void
   onToggleTheme: () => void
+  onSetTheme: (themeName: ThemeName) => void
   onExportData: () => void
   onImportData: (event: React.ChangeEvent<HTMLInputElement>) => void
   onToggleView: () => void
@@ -19,8 +23,10 @@ export const SettingsMenu = ({
   isDarkMode,
   activities,
   currentView,
+  themeName,
   onToggleMenu,
   onToggleTheme,
+  onSetTheme,
   onExportData,
   onImportData,
   onToggleView,
@@ -44,6 +50,11 @@ export const SettingsMenu = ({
 
   const handleAbout = () => {
     onShowAbout()
+    onCloseMenu()
+  }
+
+  const handleThemeChange = (newThemeName: ThemeName) => {
+    onSetTheme(newThemeName)
     onCloseMenu()
   }
 
@@ -109,6 +120,22 @@ export const SettingsMenu = ({
             )}
           </button>
           
+          <div className="menu-item theme-selector">
+            <TbPalette />
+            <span>Theme</span>
+            <select 
+              value={themeName}
+              onChange={(e) => handleThemeChange(e.target.value as ThemeName)}
+              className="theme-dropdown"
+            >
+              {themesList.map((theme) => (
+                <option key={theme.name} value={theme.name}>
+                  {theme.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button 
             className="menu-item about-menu-item"
             onClick={handleAbout}

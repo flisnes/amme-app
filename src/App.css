@@ -1,50 +1,4 @@
-/* Light theme colors */
-:root[data-theme="light"] {
-  --bg-primary: #fef7ff;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #2e2e2e;
-  --text-secondary: #666666;
-  --text-muted: #999999;
-  
-  --accent-feeding: #e8f5e8;
-  --accent-feeding-text: #2d5f2d;
-  --accent-orange: #fff4e6;
-  --accent-orange-text: #8b4513;
-  --accent-diaper: #e6f3ff;
-  --accent-diaper-text: #1e3a8a;
-  --accent-sleep: #f3e8ff;
-  --accent-sleep-text: #5b21b6;
-  
-  --header-bg: #b8a9ff;
-  --header-text: #ffffff;
-  --border-color: #e8e9ea;
-  --shadow: rgba(0, 0, 0, 0.08);
-}
-
-/* Dark theme colors */
-:root[data-theme="dark"] {
-  --bg-primary: #1a1625;
-  --bg-secondary: #2a2438;
-  --bg-card: #332d41;
-  --text-primary: #e8e9ea;
-  --text-secondary: #b8b9ba;
-  --text-muted: #888989;
-  
-  --accent-feeding: #2d4a2d;
-  --accent-feeding-text: #a8d4a8;
-  --accent-orange: #4a3829;
-  --accent-orange-text: #deb887;
-  --accent-diaper: #1e3a5f;
-  --accent-diaper-text: #87ceeb;
-  --accent-sleep: #3d2a5f;
-  --accent-sleep-text: #dda0ff;
-  
-  --header-bg: #6b46c1;
-  --header-text: #ffffff;
-  --border-color: #484554;
-  --shadow: rgba(0, 0, 0, 0.3);
-}
+/* CSS variables will be set dynamically by the theme system */
 
 .app {
   max-width: 100%;
@@ -1087,6 +1041,78 @@
 .import-menu-item {
   position: relative;
   cursor: pointer;
+}
+
+.theme-selector {
+  justify-content: space-between;
+  cursor: default;
+}
+
+.theme-dropdown {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.theme-dropdown:focus {
+  outline: none;
+  border-color: var(--header-bg);
+}
+
+/* Professional theme styles - neutral borders for activity buttons */
+:root[data-color-theme="professional"] .activity-btn:nth-child(1) {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(1):hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(2) {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(2):hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(3) {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(3):hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(4) {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:root[data-color-theme="professional"] .activity-btn:nth-child(4):hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+:root[data-color-theme="professional"] .activity-btn.active {
+  background: var(--bg-secondary);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 /* About modal */

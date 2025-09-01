@@ -12,8 +12,12 @@ import { AboutModal } from './components/AboutModal'
 import { UndoToast } from './components/UndoToast'
 import { formatTime, formatDuration, formatLiveDuration, formatTimeForInput, parseTimeFromInput, isToday, isYesterday, isTodayOrYesterday } from './utils/dateUtils'
 import { getActivityIcon, getActivityLabel } from './utils/activityUtils'
+import { useTheme } from './contexts/ThemeContext'
 
 function App() {
+  // Use theme hook
+  const { isDarkMode, toggleDarkMode, themeName, setTheme } = useTheme()
+  
   // Use custom hook for activity management
   const {
     activities,
@@ -27,8 +31,6 @@ function App() {
     undoDelete,
     importActivities
   } = useActivities()
-
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
   const [showBurgerMenu, setShowBurgerMenu] = useState(false)
@@ -146,13 +148,6 @@ function App() {
   }, [currentActivity?.type])
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('babyTracker_darkMode')
-    
-    if (savedDarkMode) {
-      setIsDarkMode(JSON.parse(savedDarkMode))
-    }
-  }, [])
 
   // Close burger menu when clicking outside
   useEffect(() => {
@@ -167,11 +162,6 @@ function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showBurgerMenu])
 
-
-  useEffect(() => {
-    localStorage.setItem('babyTracker_darkMode', JSON.stringify(isDarkMode))
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
-  }, [isDarkMode])
 
   // Activity button click handlers (simplified - options handled in ActivityControls)
   const handleActivityClick = (type: ActivityType) => {
@@ -493,8 +483,10 @@ function App() {
         isDarkMode={isDarkMode}
         activities={activities}
         currentView={currentView}
+        themeName={themeName}
         onToggleMenu={() => setShowBurgerMenu(!showBurgerMenu)}
-        onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+        onToggleTheme={toggleDarkMode}
+        onSetTheme={setTheme}
         onExportData={exportData}
         onImportData={importData}
         onToggleView={() => setCurrentView(currentView === 'activities' ? 'calendar' : 'activities')}
