@@ -260,7 +260,7 @@ export const earthTheme: Theme = {
 export const themes = {
   professional: professionalTheme,
   green: greenTheme,
-  purple: purpleTheme,
+  legacy: purpleTheme,
   earth: earthTheme
 };
 
