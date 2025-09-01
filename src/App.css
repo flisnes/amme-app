@@ -82,11 +82,51 @@
   font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .theme-toggle:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
+}
+
+.toggle-icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sun-icon,
+.moon-icon {
+  position: absolute;
+  font-size: 1.5rem;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center;
+}
+
+.sun-icon {
+  opacity: 0;
+  transform: rotate(180deg) scale(0);
+  color: #f59e0b;
+}
+
+.sun-icon.active {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.moon-icon {
+  opacity: 0;
+  transform: rotate(-180deg) scale(0);
+  color: #e0e7ff;
+}
+
+.moon-icon.active {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
 }
 
 .main-content {

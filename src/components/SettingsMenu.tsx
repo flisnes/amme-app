@@ -1,4 +1,4 @@
-import { TbMenu2, TbDownload, TbUpload, TbCalendar, TbInfoSquare, TbList } from 'react-icons/tb'
+import { TbMenu2, TbDownload, TbUpload, TbCalendar, TbInfoSquare, TbList, TbSun, TbMoon } from 'react-icons/tb'
 
 interface SettingsMenuProps {
   showBurgerMenu: boolean
@@ -64,7 +64,10 @@ export const SettingsMenu = ({
         onClick={onToggleTheme}
         aria-label="Toggle dark mode"
       >
-        {isDarkMode ? '☀️' : '🌙'}
+        <div className="toggle-icon-container">
+          <TbSun className={`sun-icon ${!isDarkMode ? 'active' : ''}`} />
+          <TbMoon className={`moon-icon ${isDarkMode ? 'active' : ''}`} />
+        </div>
       </button>
       
       {showBurgerMenu && (
