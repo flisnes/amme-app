@@ -52,7 +52,7 @@ export const ActivityItem = ({
 }: ActivityItemProps) => {
   return (
     <div
-      className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
+      className={`activity-item ${!activity.endTime ? 'ongoing' : ''} ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
       data-activity-id={activity.id}
       style={{
         transform: getSwipeTransform(activity.id),

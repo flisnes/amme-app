@@ -254,6 +254,12 @@
   border-bottom: none;
 }
 
+.activity-item.ongoing {
+  border-left: 3px solid var(--accent-feeding-text);
+  background: var(--accent-feeding);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
 .activity-item:not(.editing) {
   display: flex;
   justify-content: space-between;
@@ -1113,6 +1119,13 @@
   background: var(--bg-secondary);
   border-color: var(--text-primary);
   color: var(--text-primary);
+}
+
+/* Professional theme - ongoing activity highlighting */
+:root[data-color-theme="professional"] .activity-item.ongoing {
+  border-left: 3px solid var(--text-secondary);
+  background: var(--bg-secondary);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 /* About modal */
