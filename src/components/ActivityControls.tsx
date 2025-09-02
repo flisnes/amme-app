@@ -4,7 +4,6 @@ import type { Activity, ActivityType } from '../types/Activity'
 
 interface ActivityControlsProps {
   currentActivity: Activity | null
-  feedingIconRef: React.RefObject<HTMLSpanElement | null>
   onActivityClick: (type: ActivityType) => void
   onStartActivity: (type: ActivityType, feedingType?: 'left' | 'right' | 'bottle') => void
   onAddQuickActivity: (type: ActivityType, diaperType?: 'pee' | 'poo' | 'both') => void
@@ -12,7 +11,6 @@ interface ActivityControlsProps {
 
 export const ActivityControls = ({
   currentActivity,
-  feedingIconRef,
   onActivityClick,
   onStartActivity,
   onAddQuickActivity
@@ -49,11 +47,31 @@ export const ActivityControls = ({
         >
           <span 
             className={`activity-icon ${currentActivity?.type === 'breastfeeding' ? 'activity-icon-animated feeding' : ''}`}
-            ref={currentActivity?.type === 'breastfeeding' ? feedingIconRef : null}
           >
             <TbBottle size={24} />
             {currentActivity?.type === 'breastfeeding' && (
-              <div className="feeding-emitter" />
+              <>
+                <div className="milk-drop left drop-1">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                  </svg>
+                </div>
+                <div className="milk-drop left drop-2">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                  </svg>
+                </div>
+                <div className="milk-drop right drop-3">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                  </svg>
+                </div>
+                <div className="milk-drop right drop-4">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                  </svg>
+                </div>
+              </>
             )}
           </span>
           <span className="activity-label">

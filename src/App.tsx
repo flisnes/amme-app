@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import type { Activity, ActivityType } from './types/Activity'
 import { useActivities } from './hooks/useActivities'
@@ -62,7 +62,6 @@ function App() {
   })
   const [slidingOutItems, setSlidingOutItems] = useState<Set<string>>(new Set())
   const [currentTime, setCurrentTime] = useState(new Date())
-  const feedingIconRef = useRef<HTMLSpanElement>(null)
   
   // Update current time every second for live duration
   useEffect(() => {
@@ -74,80 +73,6 @@ function App() {
   }, [])
   
   
-  // Feeding animation: spawn drops when bottle changes direction
-  useEffect(() => {
-    if (currentActivity?.type !== 'breastfeeding' || !feedingIconRef.current) return
-    
-    const spawnDrops = (direction: 'left' | 'right') => {
-      const emitter = feedingIconRef.current?.querySelector('.feeding-emitter')
-      if (!emitter || !feedingIconRef.current) return
-      
-      // Position relative to the feeding icon container (so drops move with bottle)
-      const emitterRect = emitter.getBoundingClientRect()
-      const iconRect = feedingIconRef.current.getBoundingClientRect()
-      
-      const x = emitterRect.left - iconRect.left
-      const y = emitterRect.top - iconRect.top
-      
-      // Spawn 2-3 drops with slight randomization
-      const dropCount = 2 + Math.round(Math.random())
-      for (let i = 0; i < dropCount; i++) {
-        const drop = document.createElement('div')
-        drop.className = `milk-drop ${direction}`
-        drop.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>'
-        
-        // Position at emitter with slight randomization
-        drop.style.left = (x + (Math.random() * 4 - 2)) + 'px'
-        drop.style.top = (y + (Math.random() * 4 - 2)) + 'px'
-        
-        // Randomize timing
-        const duration = 700 + Math.random() * 400 // 0.7-1.1s
-        const delay = i * 40 + Math.random() * 80
-        drop.style.animationDuration = duration + 'ms'
-        drop.style.animationDelay = delay + 'ms'
-        
-        // Append to the feeding icon so drops move with the bottle
-        feedingIconRef.current.appendChild(drop)
-        drop.addEventListener('animationend', () => {
-          if (drop.parentNode) drop.parentNode.removeChild(drop)
-        }, { once: true })
-      }
-    }
-    
-    // Spawn drops synchronized with bottle direction changes
-    // The bottle animation: 0s = left extreme, 2.4s = right extreme, 4.8s = left extreme
-    let timeoutId: number
-    
-    const scheduleNextDrop = (isInitial = true) => {
-      if (isInitial) {
-        // Start at left extreme (0s), spawn left drops
-        timeoutId = window.setTimeout(() => {
-          spawnDrops('left')
-          // Next: right extreme at 2.4s
-          timeoutId = window.setTimeout(() => {
-            spawnDrops('right')
-            // Schedule the repeating pattern
-            scheduleNextDrop(false)
-          }, 2400)
-        }, 100) // Small delay to let animation start
-      } else {
-        // Repeating: left at 4.8s (2.4s after last), right at 7.2s (2.4s after that)
-        timeoutId = window.setTimeout(() => {
-          spawnDrops('left')
-          timeoutId = window.setTimeout(() => {
-            spawnDrops('right')
-            scheduleNextDrop(false)
-          }, 2400)
-        }, 2400)
-      }
-    }
-    
-    scheduleNextDrop()
-    
-    return () => {
-      if (timeoutId) window.clearTimeout(timeoutId)
-    }
-  }, [currentActivity?.type])
 
 
   // Close burger menu when clicking outside
@@ -455,7 +380,6 @@ function App() {
           <div className="activities-view">
             <ActivityControls
               currentActivity={currentActivity}
-              feedingIconRef={feedingIconRef}
               onActivityClick={handleActivityClick}
               onStartActivity={handleStartActivity}
               onAddQuickActivity={handleAddQuickActivity}

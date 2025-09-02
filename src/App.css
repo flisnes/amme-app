@@ -804,45 +804,78 @@
   100% { transform: rotate(18deg); }
 }
 
-.feeding-emitter {
+.milk-drop {
   position: absolute;
   left: 50%;
   top: -8px;
   transform: translateX(-50%);
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
-}
-
-.milk-drop {
-  position: absolute;
   font-size: 0.7rem;
   color: var(--accent-feeding-text);
   pointer-events: none;
-  will-change: offset-distance, transform, opacity;
-  offset-rotate: auto;
-  animation: milk-fly linear forwards;
   opacity: 0;
+  will-change: offset-distance, opacity;
 }
 
 .milk-drop.left {
   offset-path: path("M 0 0 C -20 -12, -35 -3, -55 35");
+  animation: milk-fly-left 4.8s ease-in-out infinite;
 }
 
 .milk-drop.right {
   offset-path: path("M 0 0 C 20 -12, 35 -3, 55 35");
+  animation: milk-fly-right 4.8s ease-in-out infinite;
 }
 
-@keyframes milk-fly {
+.milk-drop.drop-1 {
+  animation-delay: 0s;
+}
+
+.milk-drop.drop-2 {
+  animation-delay: 0.2s;
+}
+
+.milk-drop.drop-3 {
+  animation-delay: 2.4s;
+}
+
+.milk-drop.drop-4 {
+  animation-delay: 2.6s;
+}
+
+@keyframes milk-fly-left {
   0% {
     opacity: 1;
     offset-distance: 0%;
     transform: scale(1);
   }
-  85% {
+  15% {
     opacity: 1;
+    offset-distance: 100%;
+    transform: scale(0.8);
   }
-  100% {
+  20%, 100% {
+    opacity: 0;
+    offset-distance: 100%;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes milk-fly-right {
+  0%, 45% {
+    opacity: 0;
+    offset-distance: 0%;
+  }
+  50% {
+    opacity: 1;
+    offset-distance: 0%;
+    transform: scale(1);
+  }
+  65% {
+    opacity: 1;
+    offset-distance: 100%;
+    transform: scale(0.8);
+  }
+  70%, 100% {
     opacity: 0;
     offset-distance: 100%;
     transform: scale(0.8);
