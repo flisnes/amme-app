@@ -817,16 +817,16 @@
 }
 
 .milk-drop.left {
-  offset-path: path("M 0 0 C -15 -8, -25 -2, -35 25");
+  offset-path: path("M 0 0 C -11 -8, -18 -2, -25 25");
   offset-rotate: auto 270deg;
-  animation: milk-fly-left 4.8s ease-in-out infinite;
+  animation: milk-fly-left 4.8s ease-out infinite;
   left: calc(50% - 4px);
 }
 
 .milk-drop.right {
-  offset-path: path("M 0 0 C 15 -8, 25 -2, 35 25");
+  offset-path: path("M 0 0 C 11 -8, 18 -2, 25 25");
   offset-rotate: auto 270deg;
-  animation: milk-fly-right 4.8s ease-in-out infinite;
+  animation: milk-fly-right 4.8s ease-out infinite;
   left: calc(50% + 4px);
 }
 
