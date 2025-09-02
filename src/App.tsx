@@ -535,10 +535,19 @@ function App() {
           
           {todayActivities.length === 0 && yesterdayActivities.length === 0 && (
             <div className="no-recent-activities">
-              <p>No recent activities</p>
-              <div className="view-hint">
-                <p>Swipe left to view calendar for older activities</p>
-              </div>
+              {activities.length === 0 ? (
+                <>
+                  <p>Welcome to your baby activity tracker!</p>
+                  <p>Tap the buttons above to record feeding, sleep, and diaper changes when they happen.</p>
+                </>
+              ) : (
+                <>
+                  <p>No recent activities</p>
+                  <div className="view-hint">
+                    <p>Swipe left to view calendar for older activities</p>
+                  </div>
+                </>
+              )}
             </div>
           )}
           
