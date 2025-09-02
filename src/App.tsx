@@ -425,6 +425,7 @@ function App() {
 
   const todayActivities = activities.filter(activity => isToday(activity.startTime))
   const yesterdayActivities = activities.filter(activity => isYesterday(activity.startTime))
+  const hasOlderActivities = activities.some(activity => !isToday(activity.startTime) && !isYesterday(activity.startTime))
 
   return (
     <div 
@@ -544,7 +545,7 @@ function App() {
                 <>
                   <p>No recent activities</p>
                   <div className="view-hint">
-                    <p>Swipe left to view calendar for older activities</p>
+                    <p>{hasOlderActivities ? 'Swipe left to view calendar for older activities' : 'Swipe left for calendar view'}</p>
                   </div>
                 </>
               )}
@@ -553,7 +554,7 @@ function App() {
           
           {(todayActivities.length > 0 || yesterdayActivities.length > 0) && (
             <div className="view-hint">
-              <p>Swipe left to view calendar for older activities</p>
+              <p>{hasOlderActivities ? 'Swipe left to view calendar for older activities' : 'Swipe left for calendar view'}</p>
             </div>
           )}
         </div>
