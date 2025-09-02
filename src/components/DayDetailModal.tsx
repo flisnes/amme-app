@@ -23,7 +23,6 @@ interface DayDetailModalProps {
   formatLiveDuration: (start: Date) => string
   formatTimeForInput: (date: Date) => string
   parseTimeFromInput: (input: string) => Date
-  updateActivityData: (id: string, updates: Partial<Activity>) => void
   updateActivityDataTemporary: (id: string, updates: Partial<Activity>) => void
   commitActivityDataChanges: (id: string) => void
   cancelActivityDataChanges: (id: string) => void
@@ -51,7 +50,6 @@ export const DayDetailModal = ({
   formatLiveDuration,
   formatTimeForInput,
   parseTimeFromInput,
-  updateActivityData,
   updateActivityDataTemporary,
   commitActivityDataChanges,
   cancelActivityDataChanges,
@@ -114,7 +112,6 @@ export const DayDetailModal = ({
                 formatLiveDuration={formatLiveDuration}
                 formatTimeForInput={formatTimeForInput}
                 parseTimeFromInput={parseTimeFromInput}
-                updateActivityData={updateActivityData}
                 updateActivityDataTemporary={updateActivityDataTemporary}
                 commitActivityDataChanges={commitActivityDataChanges}
                 cancelActivityDataChanges={cancelActivityDataChanges}

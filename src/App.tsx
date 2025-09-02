@@ -27,7 +27,6 @@ function App() {
     startActivity,
     stopActivity,
     addQuickActivity,
-    updateActivityData,
     updateActivityDataTemporary,
     commitActivityDataChanges,
     cancelActivityDataChanges,
@@ -533,7 +532,6 @@ function App() {
                     formatLiveDuration={formatLiveDurationWrapper}
                     formatTimeForInput={formatTimeForInput}
                     parseTimeFromInput={parseTimeFromInput}
-                    updateActivityData={updateActivityData}
                     updateActivityDataTemporary={updateActivityDataTemporary}
                     commitActivityDataChanges={commitActivityDataChanges}
                     cancelActivityDataChanges={cancelActivityDataChanges}
@@ -570,7 +568,6 @@ function App() {
                     formatLiveDuration={formatLiveDurationWrapper}
                     formatTimeForInput={formatTimeForInput}
                     parseTimeFromInput={parseTimeFromInput}
-                    updateActivityData={updateActivityData}
                     updateActivityDataTemporary={updateActivityDataTemporary}
                     commitActivityDataChanges={commitActivityDataChanges}
                     cancelActivityDataChanges={cancelActivityDataChanges}
@@ -866,7 +863,6 @@ function App() {
           formatLiveDuration={formatLiveDurationWrapper}
           formatTimeForInput={formatTimeForInput}
           parseTimeFromInput={parseTimeFromInput}
-          updateActivityData={updateActivityData}
           updateActivityDataTemporary={updateActivityDataTemporary}
           commitActivityDataChanges={commitActivityDataChanges}
           cancelActivityDataChanges={cancelActivityDataChanges}
