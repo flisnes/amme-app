@@ -230,6 +230,106 @@ export const useActivities = () => {
     })
   }
 
+  // Temporary update for editing without triggering reorder
+  const updateActivityDataTemporary = (id: string, updates: Partial<Activity>) => {
+    setActivities(prev => prev.map(activity => {
+      if (activity.id === id) {
+        const activityWithMetadata = activity as any
+        
+        // Store original values on first edit (if not already stored) - these never change
+        const originalData: any = {}
+        Object.keys(updates).forEach(key => {
+          const originalKey = `original${key.charAt(0).toUpperCase() + key.slice(1)}`
+          if (!activityWithMetadata[originalKey] && (activity as any)[key] != null) {
+            originalData[originalKey] = (activity as any)[key]
+          }
+        })
+        
+        // Store edit session baseline values (what to restore on cancel for this edit session)
+        const editBaselineData: any = {}
+        Object.keys(updates).forEach(key => {
+          const baselineKey = `editBaseline${key.charAt(0).toUpperCase() + key.slice(1)}`
+          if (!activityWithMetadata[baselineKey] && (activity as any)[key] != null) {
+            editBaselineData[baselineKey] = (activity as any)[key]
+          }
+        })
+        
+        return { ...activity, ...originalData, ...editBaselineData, ...updates }
+      }
+      return activity
+    }))
+  }
+
+  // Commit temporary changes with proper reordering and stats update
+  const commitActivityDataChanges = (id: string) => {
+    setActivities(prev => {
+      const updatedActivity = prev.find(a => a.id === id)
+      if (!updatedActivity) return prev
+
+      // Update daily stats for the committed activity
+      setDailyStats(prevStats => {
+        const originalActivity = prev.find(a => a.id === id && (a.originalStartTime || a.startTime))
+        const referenceActivity = originalActivity ? {
+          ...originalActivity,
+          startTime: originalActivity.originalStartTime || originalActivity.startTime,
+          endTime: originalActivity.originalEndTime || originalActivity.endTime,
+          diaperType: originalActivity.originalDiaperType || originalActivity.diaperType,
+          feedingType: originalActivity.originalFeedingType || originalActivity.feedingType,
+        } : null
+        
+        return updateDailyStatsForActivity(updatedActivity, referenceActivity, prev, prevStats)
+      })
+      
+      // Clear edit session baseline values since we're committing the changes
+      const committedActivities = prev.map(activity => {
+        if (activity.id === id) {
+          const committed = { ...activity }
+          // Remove all editBaseline* properties
+          Object.keys(committed).forEach(key => {
+            if (key.startsWith('editBaseline')) {
+              delete (committed as any)[key]
+            }
+          })
+          return committed
+        }
+        return activity
+      })
+      
+      // Re-sort activities by start time (newest first) to maintain chronological order
+      return committedActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+    })
+  }
+
+  // Restore activity to edit session baseline and clear edit session values
+  const cancelActivityDataChanges = (id: string) => {
+    setActivities(prev => prev.map(activity => {
+      if (activity.id === id) {
+        const restored = { ...activity } as any
+        
+        // Restore from edit session baseline values if they exist
+        Object.keys(restored).forEach(key => {
+          if (key.startsWith('editBaseline')) {
+            const originalFieldName = key.replace('editBaseline', '').toLowerCase()
+            const properFieldName = originalFieldName.charAt(0).toLowerCase() + originalFieldName.slice(1)
+            if (restored[key] != null) {
+              restored[properFieldName] = restored[key]
+            }
+          }
+        })
+        
+        // Clear all edit session baseline values since we're canceling
+        Object.keys(restored).forEach(key => {
+          if (key.startsWith('editBaseline')) {
+            delete restored[key]
+          }
+        })
+        
+        return restored
+      }
+      return activity
+    }))
+  }
+
   const deleteActivity = (id: string) => {
     const activityToDelete = activities.find(activity => activity.id === id)
     if (!activityToDelete) return
@@ -307,6 +407,9 @@ export const useActivities = () => {
     stopActivity,
     addQuickActivity,
     updateActivityData,
+    updateActivityDataTemporary,
+    commitActivityDataChanges,
+    cancelActivityDataChanges,
     deleteActivity,
     undoDelete,
     importActivities

@@ -23,6 +23,9 @@ interface ActivityItemProps {
   formatTimeForInput: (date: Date) => string
   parseTimeFromInput: (input: string) => Date
   updateActivityData: (id: string, updates: Partial<Activity>) => void
+  updateActivityDataTemporary: (id: string, updates: Partial<Activity>) => void
+  commitActivityDataChanges: (id: string) => void
+  cancelActivityDataChanges: (id: string) => void
   deleteActivity: (id: string) => void
   setEditingActivity: (id: string | null) => void
   toggleActivityInfo: (id: string) => void
@@ -46,6 +49,9 @@ export const ActivityItem = ({
   formatTimeForInput,
   parseTimeFromInput,
   updateActivityData,
+  updateActivityDataTemporary,
+  commitActivityDataChanges,
+  cancelActivityDataChanges,
   deleteActivity,
   setEditingActivity,
   toggleActivityInfo
@@ -89,9 +95,9 @@ export const ActivityItem = ({
                   // Ensure end time is not before start time
                   if (newEndTime < activity.startTime) {
                     // If end time is before start time, also update start time
-                    updateActivityData(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                    updateActivityDataTemporary(activity.id, { startTime: newEndTime, endTime: newEndTime })
                   } else {
-                    updateActivityData(activity.id, { endTime: newEndTime })
+                    updateActivityDataTemporary(activity.id, { endTime: newEndTime })
                   }
                 }}
               />
@@ -114,9 +120,9 @@ export const ActivityItem = ({
                 // Ensure start time is not after end time
                 if (activity.endTime && newStartTime > activity.endTime) {
                   // If start time is after end time, also update end time
-                  updateActivityData(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                  updateActivityDataTemporary(activity.id, { startTime: newStartTime, endTime: newStartTime })
                 } else {
-                  updateActivityData(activity.id, { startTime: newStartTime })
+                  updateActivityDataTemporary(activity.id, { startTime: newStartTime })
                 }
               }}
             />
@@ -127,7 +133,7 @@ export const ActivityItem = ({
               <select
                 value={activity.feedingType || 'left'}
                 onChange={(e) => {
-                  updateActivityData(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                  updateActivityDataTemporary(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
                 }}
               >
                 <option value="left">Left Breast</option>
@@ -142,7 +148,7 @@ export const ActivityItem = ({
               <select
                 value={activity.diaperType || 'pee'}
                 onChange={(e) => {
-                  updateActivityData(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                  updateActivityDataTemporary(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                 }}
               >
                 <option value="pee">Pee</option>
@@ -156,7 +162,7 @@ export const ActivityItem = ({
             <textarea
               value={activity.notes || ''}
               onChange={(e) => {
-                updateActivityData(activity.id, { notes: e.target.value })
+                updateActivityDataTemporary(activity.id, { notes: e.target.value })
               }}
               placeholder=" ..."
               rows={2}
@@ -165,13 +171,19 @@ export const ActivityItem = ({
           <div className="edit-actions">
             <button 
               className="save-btn"
-              onClick={() => setEditingActivity(null)}
+              onClick={() => {
+                commitActivityDataChanges(activity.id)
+                setEditingActivity(null)
+              }}
             >
               Save
             </button>
             <button 
               className="cancel-btn"
-              onClick={() => setEditingActivity(null)}
+              onClick={() => {
+                cancelActivityDataChanges(activity.id)
+                setEditingActivity(null)
+              }}
             >
               Cancel
             </button>

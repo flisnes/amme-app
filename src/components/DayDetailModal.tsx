@@ -24,6 +24,9 @@ interface DayDetailModalProps {
   formatTimeForInput: (date: Date) => string
   parseTimeFromInput: (input: string) => Date
   updateActivityData: (id: string, updates: Partial<Activity>) => void
+  updateActivityDataTemporary: (id: string, updates: Partial<Activity>) => void
+  commitActivityDataChanges: (id: string) => void
+  cancelActivityDataChanges: (id: string) => void
   deleteActivity: (id: string) => void
   setEditingActivity: (id: string | null) => void
   toggleActivityInfo: (id: string) => void
@@ -49,6 +52,9 @@ export const DayDetailModal = ({
   formatTimeForInput,
   parseTimeFromInput,
   updateActivityData,
+  updateActivityDataTemporary,
+  commitActivityDataChanges,
+  cancelActivityDataChanges,
   deleteActivity,
   setEditingActivity,
   toggleActivityInfo,
@@ -109,6 +115,9 @@ export const DayDetailModal = ({
                 formatTimeForInput={formatTimeForInput}
                 parseTimeFromInput={parseTimeFromInput}
                 updateActivityData={updateActivityData}
+                updateActivityDataTemporary={updateActivityDataTemporary}
+                commitActivityDataChanges={commitActivityDataChanges}
+                cancelActivityDataChanges={cancelActivityDataChanges}
                 deleteActivity={deleteActivity}
                 setEditingActivity={setEditingActivity}
                 toggleActivityInfo={toggleActivityInfo}

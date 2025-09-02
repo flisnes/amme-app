@@ -28,6 +28,9 @@ function App() {
     stopActivity,
     addQuickActivity,
     updateActivityData,
+    updateActivityDataTemporary,
+    commitActivityDataChanges,
+    cancelActivityDataChanges,
     deleteActivity,
     undoDelete,
     importActivities
@@ -531,6 +534,9 @@ function App() {
                     formatTimeForInput={formatTimeForInput}
                     parseTimeFromInput={parseTimeFromInput}
                     updateActivityData={updateActivityData}
+                    updateActivityDataTemporary={updateActivityDataTemporary}
+                    commitActivityDataChanges={commitActivityDataChanges}
+                    cancelActivityDataChanges={cancelActivityDataChanges}
                     deleteActivity={deleteActivity}
                     setEditingActivity={setEditingActivity}
                     toggleActivityInfo={toggleActivityInfo}
@@ -565,6 +571,9 @@ function App() {
                     formatTimeForInput={formatTimeForInput}
                     parseTimeFromInput={parseTimeFromInput}
                     updateActivityData={updateActivityData}
+                    updateActivityDataTemporary={updateActivityDataTemporary}
+                    commitActivityDataChanges={commitActivityDataChanges}
+                    cancelActivityDataChanges={cancelActivityDataChanges}
                     deleteActivity={deleteActivity}
                     setEditingActivity={setEditingActivity}
                     toggleActivityInfo={toggleActivityInfo}
@@ -639,9 +648,9 @@ function App() {
                                       // Ensure end time is not before start time
                                       if (newEndTime < activity.startTime) {
                                         // If end time is before start time, also update start time
-                                        updateActivityData(activity.id, { startTime: newEndTime, endTime: newEndTime })
+                                        updateActivityDataTemporary(activity.id, { startTime: newEndTime, endTime: newEndTime })
                                       } else {
-                                        updateActivityData(activity.id, { endTime: newEndTime })
+                                        updateActivityDataTemporary(activity.id, { endTime: newEndTime })
                                       }
                                     }}
                                   />
@@ -657,9 +666,9 @@ function App() {
                                     // Ensure start time is not after end time
                                     if (activity.endTime && newStartTime > activity.endTime) {
                                       // If start time is after end time, also update end time
-                                      updateActivityData(activity.id, { startTime: newStartTime, endTime: newStartTime })
+                                      updateActivityDataTemporary(activity.id, { startTime: newStartTime, endTime: newStartTime })
                                     } else {
-                                      updateActivityData(activity.id, { startTime: newStartTime })
+                                      updateActivityDataTemporary(activity.id, { startTime: newStartTime })
                                     }
                                   }}
                                 />
@@ -670,7 +679,7 @@ function App() {
                                   <select
                                     value={activity.feedingType || 'left'}
                                     onChange={(e) => {
-                                      updateActivityData(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
+                                      updateActivityDataTemporary(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
                                     }}
                                   >
                                     <option value="left">Left Breast</option>
@@ -685,7 +694,7 @@ function App() {
                                   <select
                                     value={activity.diaperType || 'pee'}
                                     onChange={(e) => {
-                                      updateActivityData(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
+                                      updateActivityDataTemporary(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
                                     }}
                                   >
                                     <option value="pee">Pee</option>
@@ -699,7 +708,7 @@ function App() {
                                 <textarea
                                   value={activity.notes || ''}
                                   onChange={(e) => {
-                                    updateActivityData(activity.id, { notes: e.target.value })
+                                    updateActivityDataTemporary(activity.id, { notes: e.target.value })
                                   }}
                                   placeholder=" ..."
                                   rows={2}
@@ -708,13 +717,19 @@ function App() {
                               <div className="edit-actions">
                                 <button 
                                   className="save-btn"
-                                  onClick={() => setEditingActivity(null)}
+                                  onClick={() => {
+                                    commitActivityDataChanges(activity.id)
+                                    setEditingActivity(null)
+                                  }}
                                 >
                                   Save
                                 </button>
                                 <button 
                                   className="cancel-btn"
-                                  onClick={() => setEditingActivity(null)}
+                                  onClick={() => {
+                                    cancelActivityDataChanges(activity.id)
+                                    setEditingActivity(null)
+                                  }}
                                 >
                                   Cancel
                                 </button>
@@ -852,6 +867,9 @@ function App() {
           formatTimeForInput={formatTimeForInput}
           parseTimeFromInput={parseTimeFromInput}
           updateActivityData={updateActivityData}
+          updateActivityDataTemporary={updateActivityDataTemporary}
+          commitActivityDataChanges={commitActivityDataChanges}
+          cancelActivityDataChanges={cancelActivityDataChanges}
           deleteActivity={deleteActivity}
           setEditingActivity={setEditingActivity}
           toggleActivityInfo={toggleActivityInfo}
