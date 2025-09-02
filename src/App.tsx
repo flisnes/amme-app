@@ -23,6 +23,7 @@ function App() {
     activities,
     currentActivity,
     recentlyDeleted,
+    dailyStats,
     startActivity,
     stopActivity,
     addQuickActivity,
@@ -818,6 +819,7 @@ function App() {
         ) : (
           <Calendar 
             activities={activities}
+            dailyStats={dailyStats}
             selectedDay={selectedDay}
             setSelectedDay={setSelectedDay}
           />

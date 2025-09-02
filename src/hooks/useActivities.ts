@@ -1,38 +1,88 @@
 import { useState, useEffect } from 'react'
 import type { Activity, ActivityType } from '../types/Activity'
+import type { DailyStatsMap } from '../types/DailyStats'
+import { 
+  updateDailyStatsForActivity, 
+  removeDailyStatsForActivity,
+  calculateDailyStats,
+  formatDateKey 
+} from '../utils/dailyStatsUtils'
 
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([])
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null)
   const [recentlyDeleted, setRecentlyDeleted] = useState<{activity: Activity, timeoutId: number} | null>(null)
+  const [dailyStats, setDailyStats] = useState<DailyStatsMap>({})
 
   // Load data from localStorage on mount
   useEffect(() => {
     const savedActivities = localStorage.getItem('babyTracker_activities')
     const savedCurrentActivity = localStorage.getItem('babyTracker_currentActivity')
+    const savedDailyStats = localStorage.getItem('babyTracker_dailyStats')
+    
+    let parsedActivities: Activity[] = []
     
     if (savedActivities) {
-      const parsed = JSON.parse(savedActivities).map((activity: any) => ({
+      parsedActivities = JSON.parse(savedActivities).map((activity: any) => ({
         ...activity,
         startTime: new Date(activity.startTime),
         endTime: activity.endTime ? new Date(activity.endTime) : undefined
       }))
-      setActivities(parsed)
+      setActivities(parsedActivities)
     }
     
     if (savedCurrentActivity) {
-      const parsed = JSON.parse(savedCurrentActivity)
+      const parsedCurrentActivity = JSON.parse(savedCurrentActivity)
       setCurrentActivity({
-        ...parsed,
-        startTime: new Date(parsed.startTime)
+        ...parsedCurrentActivity,
+        startTime: new Date(parsedCurrentActivity.startTime)
       })
     }
+    
+    // Handle daily stats loading and migration
+    if (savedDailyStats) {
+      const parsedStats = JSON.parse(savedDailyStats)
+      // Check if we need to rebuild stats (version check for timezone fix)
+      const needsRebuild = !parsedStats._version || parsedStats._version < 2
+      if (needsRebuild && parsedActivities.length > 0) {
+        // Rebuild stats with correct timezone logic
+        rebuildDailyStats(parsedActivities)
+      } else {
+        setDailyStats(parsedStats)
+      }
+    } else if (parsedActivities.length > 0) {
+      // If we have activities but no daily stats, rebuild them
+      rebuildDailyStats(parsedActivities)
+    }
   }, [])
+
+  // Rebuild daily stats from scratch (for migration or corruption recovery)
+  const rebuildDailyStats = (activitiesList: Activity[]) => {
+    const newStats: DailyStatsMap = {}
+    const processedDates = new Set<string>()
+    
+    activitiesList.forEach(activity => {
+      const dateKey = formatDateKey(activity.startTime)
+      if (!processedDates.has(dateKey)) {
+        processedDates.add(dateKey)
+        const date = new Date(dateKey + 'T00:00:00.000')  // Local time, not UTC
+        newStats[dateKey] = calculateDailyStats(activitiesList, date)
+      }
+    })
+    
+    setDailyStats(newStats)
+  }
 
   // Save activities to localStorage
   useEffect(() => {
     localStorage.setItem('babyTracker_activities', JSON.stringify(activities))
   }, [activities])
+
+  // Save daily stats to localStorage
+  useEffect(() => {
+    const statsWithVersion = { ...dailyStats, _version: 2 }
+    localStorage.setItem('babyTracker_dailyStats', JSON.stringify(statsWithVersion))
+  }, [dailyStats])
 
   // Save current activity to localStorage
   useEffect(() => {
@@ -78,9 +128,18 @@ export const useActivities = () => {
         endTime: new Date()
       }
       // Update the existing activity in the log with the end time
-      setActivities(prev => prev.map(activity => 
-        activity.id === currentActivity.id ? completedActivity : activity
-      ))
+      setActivities(prev => {
+        const newActivities = prev.map(activity => 
+          activity.id === currentActivity.id ? completedActivity : activity
+        )
+        
+        // Update daily stats for the completed activity
+        setDailyStats(prevStats => 
+          updateDailyStatsForActivity(completedActivity, currentActivity, newActivities, prevStats)
+        )
+        
+        return newActivities
+      })
       setCurrentActivity(null)
     }
   }
@@ -92,9 +151,18 @@ export const useActivities = () => {
         ...currentActivity,
         endTime: new Date()
       }
-      setActivities(prev => prev.map(activity => 
-        activity.id === currentActivity.id ? completedActivity : activity
-      ))
+      setActivities(prev => {
+        const newActivities = prev.map(activity => 
+          activity.id === currentActivity.id ? completedActivity : activity
+        )
+        
+        // Update daily stats for the completed activity
+        setDailyStats(prevStats => 
+          updateDailyStatsForActivity(completedActivity, currentActivity, newActivities, prevStats)
+        )
+        
+        return newActivities
+      })
       setCurrentActivity(null)
     }
 
@@ -108,13 +176,22 @@ export const useActivities = () => {
     }
     setActivities(prev => {
       const newActivities = [activity, ...prev]
-      // Sort to maintain chronological order (newest first)
-      return newActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+        .sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
+      
+      // Update daily stats for the new activity
+      setDailyStats(prevStats => 
+        updateDailyStatsForActivity(activity, null, newActivities, prevStats)
+      )
+      
+      return newActivities
     })
   }
 
   const updateActivityData = (id: string, updates: Partial<Activity>) => {
     setActivities(prev => {
+      const originalActivity = prev.find(activity => activity.id === id)
+      if (!originalActivity) return prev
+      
       const updatedActivities = prev.map(activity => {
         if (activity.id === id) {
           // Store original values on first edit (if not already stored)
@@ -140,6 +217,14 @@ export const useActivities = () => {
         return activity
       })
       
+      // Update daily stats for the modified activity
+      const updatedActivity = updatedActivities.find(a => a.id === id)
+      if (updatedActivity) {
+        setDailyStats(prevStats => 
+          updateDailyStatsForActivity(updatedActivity, originalActivity, updatedActivities, prevStats)
+        )
+      }
+      
       // Re-sort activities by start time (newest first) to maintain chronological order
       return updatedActivities.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
     })
@@ -149,8 +234,17 @@ export const useActivities = () => {
     const activityToDelete = activities.find(activity => activity.id === id)
     if (!activityToDelete) return
     
-    // Remove from activities list
-    setActivities(prev => prev.filter(activity => activity.id !== id))
+    // Remove from activities list and update daily stats
+    setActivities(prev => {
+      const newActivities = prev.filter(activity => activity.id !== id)
+      
+      // Update daily stats after deletion
+      setDailyStats(prevStats => 
+        removeDailyStatsForActivity(activityToDelete, newActivities, prevStats)
+      )
+      
+      return newActivities
+    })
     
     // Clear any existing undo timeout
     if (recentlyDeleted?.timeoutId) {
@@ -206,6 +300,7 @@ export const useActivities = () => {
     activities,
     currentActivity,
     recentlyDeleted,
+    dailyStats,
     
     // Actions
     startActivity,

@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { TbChevronLeft, TbChevronRight, TbBottle, TbDiaper, TbMoon } from 'react-icons/tb'
 import type { Activity } from '../types/Activity'
+import type { DailyStatsMap } from '../types/DailyStats'
+import { getDailyStatsForDate } from '../utils/dailyStatsUtils'
 
 interface CalendarProps {
   activities: Activity[]
+  dailyStats: DailyStatsMap
   selectedDay: Date | null
   setSelectedDay: (day: Date | null) => void
 }
 
-export const Calendar = ({ activities, selectedDay, setSelectedDay }: CalendarProps) => {
+export const Calendar = ({ activities, dailyStats, selectedDay, setSelectedDay }: CalendarProps) => {
   const [calendarDate, setCalendarDate] = useState(new Date())
 
   // Calendar helper functions
@@ -42,7 +45,8 @@ export const Calendar = ({ activities, selectedDay, setSelectedDay }: CalendarPr
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
     
     if (hours > 0) {
-      return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`
+      // Use clock format for compactness: "13:49" instead of "13h 49m"
+      return `${hours}:${minutes.toString().padStart(2, '0')}`
     } else if (minutes > 0) {
       return `${minutes}m`
     } else {
@@ -50,34 +54,14 @@ export const Calendar = ({ activities, selectedDay, setSelectedDay }: CalendarPr
     }
   }
 
-  // Calculate daily activity summaries
+  // Get daily activity summaries (uses cached statistics with fallback)
   const getDailySummary = (date: Date) => {
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
-
-    const dayActivities = activities.filter(activity => {
-      const activityDate = new Date(activity.startTime)
-      return activityDate >= startOfDay && activityDate <= endOfDay
-    })
-
-    const summary = {
-      feedings: dayActivities.filter(a => a.type === 'breastfeeding').length,
-      diapers: dayActivities.filter(a => a.type === 'diaper').length,
-      sleepDuration: 0
+    const stats = getDailyStatsForDate(date, dailyStats, activities)
+    return {
+      feedings: stats.feedings,
+      diapers: stats.diapers,
+      sleepDuration: stats.sleepDuration
     }
-
-    // Calculate total sleep duration
-    const sleepActivities = dayActivities.filter(a => a.type === 'sleep' && a.endTime)
-    summary.sleepDuration = sleepActivities.reduce((total, activity) => {
-      if (activity.endTime) {
-        return total + (activity.endTime.getTime() - activity.startTime.getTime())
-      }
-      return total
-    }, 0)
-
-    return summary
   }
 
   // Handle calendar day click
