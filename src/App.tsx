@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { TbTrash, TbEdit, TbInfoCircle } from 'react-icons/tb'
 import './App.css'
 import type { Activity, ActivityType } from './types/Activity'
 import { useActivities } from './hooks/useActivities'
@@ -10,7 +9,7 @@ import { DayDetailModal } from './components/DayDetailModal'
 import { SettingsMenu } from './components/SettingsMenu'
 import { AboutModal } from './components/AboutModal'
 import { UndoToast } from './components/UndoToast'
-import { formatTime, formatDuration, formatLiveDuration, formatTimeForInput, parseTimeFromInput, isToday, isYesterday, isTodayOrYesterday } from './utils/dateUtils'
+import { formatTime, formatDuration, formatLiveDuration, formatTimeForInput, parseTimeFromInput, isToday, isYesterday } from './utils/dateUtils'
 import { getActivityIcon, getActivityLabel } from './utils/activityUtils'
 import { useTheme } from './contexts/ThemeContext'
 
@@ -149,7 +148,6 @@ function App() {
       if (timeoutId) window.clearTimeout(timeoutId)
     }
   }, [currentActivity?.type])
-  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
 
   // Close burger menu when clicking outside
@@ -340,50 +338,6 @@ function App() {
 
 
 
-  const formatDate = (date: Date) => {
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today'
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday'
-    } else {
-      return date.toLocaleDateString([], { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })
-    }
-  }
-
-  const groupActivitiesByDate = (activities: Activity[]) => {
-    const groups: Record<string, Activity[]> = {}
-    
-    activities.forEach(activity => {
-      const dateKey = activity.startTime.toDateString()
-      if (!groups[dateKey]) {
-        groups[dateKey] = []
-      }
-      groups[dateKey].push(activity)
-    })
-    
-    return groups
-  }
-
-  const toggleDateExpansion = (dateKey: string) => {
-    setExpandedDates(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(dateKey)) {
-        newSet.delete(dateKey)
-      } else {
-        newSet.add(dateKey)
-      }
-      return newSet
-    })
-  }
 
   const toggleActivityInfo = (activityId: string) => {
     setExpandedActivityInfo(prev => {
@@ -471,8 +425,6 @@ function App() {
 
   const todayActivities = activities.filter(activity => isToday(activity.startTime))
   const yesterdayActivities = activities.filter(activity => isYesterday(activity.startTime))
-  const historicalActivities = activities.filter(activity => !isTodayOrYesterday(activity.startTime))
-  const historicalGroups = groupActivitiesByDate(historicalActivities)
 
   return (
     <div 
@@ -513,7 +465,7 @@ function App() {
             <>
               <h3>Today</h3>
               <ul>
-                {todayActivities.slice(0, 10).map(activity => (
+                {todayActivities.map(activity => (
                 <li key={activity.id}>
                   <ActivityItem
                     activity={activity}
@@ -582,251 +534,21 @@ function App() {
           )}
           
           {todayActivities.length === 0 && yesterdayActivities.length === 0 && (
-            <p>No recent activities</p>
+            <div className="no-recent-activities">
+              <p>No recent activities</p>
+              <div className="view-hint">
+                <p>Swipe left to view calendar for older activities</p>
+              </div>
+            </div>
+          )}
+          
+          {(todayActivities.length > 0 || yesterdayActivities.length > 0) && (
+            <div className="view-hint">
+              <p>Swipe left to view calendar for older activities</p>
+            </div>
           )}
         </div>
 
-        {Object.keys(historicalGroups).length > 0 && (
-          <div className="historical-log">
-            <h3>History</h3>
-            {Object.entries(historicalGroups)
-              .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
-              .map(([dateKey, dayActivities]) => (
-                <div key={dateKey} className="date-group">
-                  <button 
-                    className="date-header"
-                    onClick={() => toggleDateExpansion(dateKey)}
-                  >
-                    <span>{formatDate(new Date(dateKey))}</span>
-                    <span className="activity-count">({dayActivities.length} activities)</span>
-                    <span className="expand-icon">
-                      {expandedDates.has(dateKey) ? '▼' : '▶'}
-                    </span>
-                  </button>
-                  
-                  {expandedDates.has(dateKey) && (
-                    <ul className="date-activities">
-                      {dayActivities.map(activity => (
-                        <li key={activity.id}>
-                          <div
-                            className={`activity-item ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
-                            data-activity-id={activity.id}
-                            style={{
-                              transform: getSwipeTransform(activity.id),
-                              opacity: getSwipeOpacity(activity.id),
-                              backgroundColor: getSwipeBackgroundColor(activity.id),
-                              transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 
-                                         slidingOutItems.has(activity.id) ? 'transform 0.3s ease-out, opacity 0.3s ease-out' :
-                                         'transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease'
-                            }}
-                          >
-                          {editingActivity === activity.id ? (
-                            <div className="edit-form">
-                              <div className="edit-row">
-                                <span className="activity-type">
-                                  {getActivityIcon(activity.type)} {getActivityLabel(activity)}
-                                </span>
-                                <button 
-                                  className="delete-btn"
-                                  onClick={() => deleteActivity(activity.id)}
-                                  title="Delete activity"
-                                >
-                                  <TbTrash />
-                                </button>
-                              </div>
-                              {(activity.type === 'breastfeeding' || activity.type === 'sleep') && activity.endTime && (
-                                <div className="edit-row">
-                                  <label>End:</label>
-                                  <input
-                                    type="datetime-local"
-                                    value={formatTimeForInput(activity.endTime)}
-                                    onChange={(e) => {
-                                      const newEndTime = parseTimeFromInput(e.target.value)
-                                      // Ensure end time is not before start time
-                                      if (newEndTime < activity.startTime) {
-                                        // If end time is before start time, also update start time
-                                        updateActivityDataTemporary(activity.id, { startTime: newEndTime, endTime: newEndTime })
-                                      } else {
-                                        updateActivityDataTemporary(activity.id, { endTime: newEndTime })
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              )}
-                              <div className="edit-row">
-                                <label>{(activity.type === 'breastfeeding' || activity.type === 'sleep') ? 'Start:' : 'Time:'}</label>
-                                <input
-                                  type="datetime-local"
-                                  value={formatTimeForInput(activity.startTime)}
-                                  onChange={(e) => {
-                                    const newStartTime = parseTimeFromInput(e.target.value)
-                                    // Ensure start time is not after end time
-                                    if (activity.endTime && newStartTime > activity.endTime) {
-                                      // If start time is after end time, also update end time
-                                      updateActivityDataTemporary(activity.id, { startTime: newStartTime, endTime: newStartTime })
-                                    } else {
-                                      updateActivityDataTemporary(activity.id, { startTime: newStartTime })
-                                    }
-                                  }}
-                                />
-                              </div>
-                              {activity.type === 'breastfeeding' && (
-                                <div className="edit-row">
-                                  <label>Type:</label>
-                                  <select
-                                    value={activity.feedingType || 'left'}
-                                    onChange={(e) => {
-                                      updateActivityDataTemporary(activity.id, { feedingType: e.target.value as 'left' | 'right' | 'bottle' })
-                                    }}
-                                  >
-                                    <option value="left">Left Breast</option>
-                                    <option value="right">Right Breast</option>
-                                    <option value="bottle">Bottle</option>
-                                  </select>
-                                </div>
-                              )}
-                              {activity.type === 'diaper' && (
-                                <div className="edit-row">
-                                  <label>Type:</label>
-                                  <select
-                                    value={activity.diaperType || 'pee'}
-                                    onChange={(e) => {
-                                      updateActivityDataTemporary(activity.id, { diaperType: e.target.value as 'pee' | 'poo' | 'both' })
-                                    }}
-                                  >
-                                    <option value="pee">Pee</option>
-                                    <option value="poo">Poo</option>
-                                    <option value="both">Both</option>
-                                  </select>
-                                </div>
-                              )}
-                              <div className="edit-row">
-                                <label>Notes:</label>
-                                <textarea
-                                  value={activity.notes || ''}
-                                  onChange={(e) => {
-                                    updateActivityDataTemporary(activity.id, { notes: e.target.value })
-                                  }}
-                                  placeholder=" ..."
-                                  rows={2}
-                                />
-                              </div>
-                              <div className="edit-actions">
-                                <button 
-                                  className="save-btn"
-                                  onClick={() => {
-                                    commitActivityDataChanges(activity.id)
-                                    setEditingActivity(null)
-                                  }}
-                                >
-                                  Save
-                                </button>
-                                <button 
-                                  className="cancel-btn"
-                                  onClick={() => {
-                                    cancelActivityDataChanges(activity.id)
-                                    setEditingActivity(null)
-                                  }}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <span className="activity-type">
-                                <span 
-                                  className="activity-icon-container"
-                                  style={{
-                                    transform: `scale(1)`,
-                                    transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 'transform 0.2s ease'
-                                  }}
-                                >
-                                  {getActivityIcon(activity.type)}
-                                </span>
-                                {' '}
-                                {getActivityLabel(activity)}
-                              </span>
-                              <div className="activity-info">
-                                <div className="activity-time-container">
-                                  <span className="activity-time">
-                                    {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
-                                      <>
-                                        {formatTime(activity.startTime)}
-                                        {activity.endTime && ` - ${formatTime(activity.endTime)}`}
-                                        {activity.endTime && (
-                                          <span className="duration">
-                                            ({formatDuration(activity.startTime, activity.endTime)})
-                                          </span>
-                                        )}
-                                      </>
-                                    ) : (
-                                      formatTime(activity.startTime)
-                                    )}
-                                    {activity.feedingType && (
-                                      <span className="activity-subtype"> ({activity.feedingType})</span>
-                                    )}
-                                    {activity.diaperType && (
-                                      <span className="activity-subtype"> ({activity.diaperType})</span>
-                                    )}
-                                  </span>
-                                  
-                                  {expandedActivityInfo.has(activity.id) && activity.originalStartTime && (
-                                    <div className="original-info">
-                                      <span className="original-time">
-                                        {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
-                                          <>
-                                            {formatTime(activity.originalStartTime)}
-                                            {activity.originalEndTime && ` - ${formatTime(activity.originalEndTime)}`}
-                                            {activity.originalEndTime && (
-                                              <span className="duration">
-                                                ({formatDuration(activity.originalStartTime, activity.originalEndTime)})
-                                              </span>
-                                            )}
-                                          </>
-                                        ) : (
-                                          formatTime(activity.originalStartTime)
-                                        )}
-                                        {activity.originalFeedingType && (
-                                          <span className="activity-subtype"> ({activity.originalFeedingType})</span>
-                                        )}
-                                        {activity.originalDiaperType && (
-                                          <span className="activity-subtype"> ({activity.originalDiaperType})</span>
-                                        )}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="activity-buttons">
-                                  {activity.originalStartTime && (
-                                    <button 
-                                      className="info-btn"
-                                      onClick={() => toggleActivityInfo(activity.id)}
-                                      title="View original activity info"
-                                    >
-                                      <TbInfoCircle />
-                                    </button>
-                                  )}
-                                  <button 
-                                    className="edit-btn"
-                                    onClick={() => setEditingActivity(activity.id)}
-                                    title="Edit activity"
-                                  >
-                                    <TbEdit />
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-          </div>
-        )}
           </div>
         ) : (
           <Calendar 
