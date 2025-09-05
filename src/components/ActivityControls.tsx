@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TbBottle, TbDiaper, TbMoon, TbDroplet, TbPoo, TbArrowBigLeft, TbArrowBigRight, TbBabyBottle, TbDropletFilled } from 'react-icons/tb'
+import { TbBabyBottle, TbDiaper, TbMoon, TbDroplet, TbPoo, TbArrowBigLeft, TbArrowBigRight, TbDropletFilled } from 'react-icons/tb'
 import type { Activity, ActivityType } from '../types/Activity'
 
 interface ActivityControlsProps {
@@ -48,7 +48,7 @@ export const ActivityControls = ({
           <span 
             className={`activity-icon ${currentActivity?.type === 'breastfeeding' ? 'activity-icon-animated feeding' : ''}`}
           >
-            <TbBottle size={24} />
+            <TbBabyBottle size={24} />
             {currentActivity?.type === 'breastfeeding' && (
               <>
                 <div className="milk-drop left drop-1">

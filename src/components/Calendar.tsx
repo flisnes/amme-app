@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TbChevronLeft, TbChevronRight, TbBottle, TbDiaper, TbMoon } from 'react-icons/tb'
+import { TbChevronLeft, TbChevronRight, TbBabyBottle, TbDiaper, TbMoon } from 'react-icons/tb'
 import type { Activity } from '../types/Activity'
 import type { DailyStatsMap } from '../types/DailyStats'
 import { getDailyStatsForDate } from '../utils/dailyStatsUtils'
@@ -117,7 +117,7 @@ export const Calendar = ({ activities, dailyStats, selectedDay, setSelectedDay }
                   <div className="day-summary">
                     {summary.feedings > 0 && (
                       <div className="summary-item feeding">
-                        <TbBottle size={10} />
+                        <TbBabyBottle size={10} />
                         <span>{summary.feedings}</span>
                       </div>
                     )}
@@ -143,7 +143,7 @@ export const Calendar = ({ activities, dailyStats, selectedDay, setSelectedDay }
 
       <div className="calendar-legend">
         <div className="legend-item">
-          <TbBottle size={14} />
+          <TbBabyBottle size={14} />
           <span>Feedings</span>
         </div>
         <div className="legend-item">

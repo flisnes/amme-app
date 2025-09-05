@@ -1,9 +1,9 @@
-import { TbBottle, TbDiaper, TbMoon, TbNotes } from 'react-icons/tb'
+import { TbBabyBottle, TbDiaper, TbMoon, TbNotes } from 'react-icons/tb'
 import type { Activity, ActivityType } from '../types/Activity'
 
 export const getActivityIcon = (type: ActivityType) => {
   switch (type) {
-    case 'breastfeeding': return <TbBottle size={20} />
+    case 'breastfeeding': return <TbBabyBottle size={20} />
     case 'diaper': return <TbDiaper size={20} />
     case 'sleep': return <TbMoon size={20} />
     default: return <TbNotes size={20} />
