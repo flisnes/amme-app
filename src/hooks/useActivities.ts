@@ -230,31 +230,43 @@ export const useActivities = () => {
     })
   }
 
-  // Temporary update for editing without triggering reorder
-  const updateActivityDataTemporary = (id: string, updates: Partial<Activity>) => {
+  // Initialize original values when editing starts
+  const startEditingActivity = (id: string) => {
     setActivities(prev => prev.map(activity => {
       if (activity.id === id) {
         const activityWithMetadata = activity as any
         
-        // Store original values on first edit (if not already stored) - these never change
+        // Store original values for all editable fields if not already stored
         const originalData: any = {}
-        Object.keys(updates).forEach(key => {
-          const originalKey = `original${key.charAt(0).toUpperCase() + key.slice(1)}`
-          if (!activityWithMetadata[originalKey] && (activity as any)[key] != null) {
-            originalData[originalKey] = (activity as any)[key]
+        const editableFields = ['startTime', 'endTime', 'feedingType', 'diaperType', 'notes']
+        
+        editableFields.forEach(field => {
+          const originalKey = `original${field.charAt(0).toUpperCase() + field.slice(1)}`
+          if (!activityWithMetadata[originalKey] && (activity as any)[field] != null) {
+            originalData[originalKey] = (activity as any)[field]
           }
         })
         
-        // Store edit session baseline values (what to restore on cancel for this edit session)
+        // Store edit session baseline values
         const editBaselineData: any = {}
-        Object.keys(updates).forEach(key => {
-          const baselineKey = `editBaseline${key.charAt(0).toUpperCase() + key.slice(1)}`
-          if (!activityWithMetadata[baselineKey] && (activity as any)[key] != null) {
-            editBaselineData[baselineKey] = (activity as any)[key]
+        editableFields.forEach(field => {
+          const baselineKey = `editBaseline${field.charAt(0).toUpperCase() + field.slice(1)}`
+          if (!activityWithMetadata[baselineKey] && (activity as any)[field] != null) {
+            editBaselineData[baselineKey] = (activity as any)[field]
           }
         })
         
-        return { ...activity, ...originalData, ...editBaselineData, ...updates }
+        return { ...activity, ...originalData, ...editBaselineData }
+      }
+      return activity
+    }))
+  }
+
+  // Temporary update for editing without triggering reorder
+  const updateActivityDataTemporary = (id: string, updates: Partial<Activity>) => {
+    setActivities(prev => prev.map(activity => {
+      if (activity.id === id) {
+        return { ...activity, ...updates }
       }
       return activity
     }))
@@ -428,9 +440,19 @@ export const useActivities = () => {
       ))
     }
     
+    // Preserve original times if they don't already exist
+    const originalData: Partial<Activity> = {}
+    if (!activityToResume.originalStartTime) {
+      originalData.originalStartTime = activityToResume.startTime
+    }
+    if (!activityToResume.originalEndTime && activityToResume.endTime) {
+      originalData.originalEndTime = activityToResume.endTime
+    }
+    
     // Remove the end time from the activity to resume it
     const resumedActivity = {
       ...activityToResume,
+      ...originalData,
       endTime: undefined
     }
     
@@ -464,6 +486,7 @@ export const useActivities = () => {
     stopActivity,
     addQuickActivity,
     updateActivityData,
+    startEditingActivity,
     updateActivityDataTemporary,
     commitActivityDataChanges,
     cancelActivityDataChanges,

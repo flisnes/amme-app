@@ -33,7 +33,8 @@ function App() {
     undoDelete,
     importActivities,
     resumeActivity,
-    getLastResumableActivity
+    getLastResumableActivity,
+    startEditingActivity
   } = useActivities()
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
@@ -106,6 +107,15 @@ function App() {
 
   const handleAddQuickActivity = (type: ActivityType, diaperType?: 'pee' | 'poo' | 'both') => {
     addQuickActivity(type, diaperType)
+  }
+
+  const handleStartEditing = (activityId: string) => {
+    startEditingActivity(activityId)
+    setEditingActivity(activityId)
+  }
+
+  const handleCancelEditing = () => {
+    setEditingActivity(null)
   }
 
   // Wrapper for formatLiveDuration with current time
@@ -472,7 +482,8 @@ function App() {
                     commitActivityDataChanges={commitActivityDataChanges}
                     cancelActivityDataChanges={cancelActivityDataChanges}
                     deleteActivity={deleteActivity}
-                    setEditingActivity={setEditingActivity}
+                    setEditingActivity={handleStartEditing}
+                    cancelEditingActivity={handleCancelEditing}
                     toggleActivityInfo={toggleActivityInfo}
                     resumeActivity={resumeActivity}
                     currentActivity={currentActivity}
@@ -511,7 +522,8 @@ function App() {
                     commitActivityDataChanges={commitActivityDataChanges}
                     cancelActivityDataChanges={cancelActivityDataChanges}
                     deleteActivity={deleteActivity}
-                    setEditingActivity={setEditingActivity}
+                    setEditingActivity={handleStartEditing}
+                    cancelEditingActivity={handleCancelEditing}
                     toggleActivityInfo={toggleActivityInfo}
                     resumeActivity={resumeActivity}
                     currentActivity={currentActivity}
@@ -588,7 +600,8 @@ function App() {
           commitActivityDataChanges={commitActivityDataChanges}
           cancelActivityDataChanges={cancelActivityDataChanges}
           deleteActivity={deleteActivity}
-          setEditingActivity={setEditingActivity}
+          setEditingActivity={handleStartEditing}
+          cancelEditingActivity={handleCancelEditing}
           toggleActivityInfo={toggleActivityInfo}
           onClose={() => setSelectedDay(null)}
         />

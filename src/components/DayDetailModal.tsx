@@ -27,7 +27,8 @@ interface DayDetailModalProps {
   commitActivityDataChanges: (id: string) => void
   cancelActivityDataChanges: (id: string) => void
   deleteActivity: (id: string) => void
-  setEditingActivity: (id: string | null) => void
+  setEditingActivity: (id: string) => void
+  cancelEditingActivity: () => void
   toggleActivityInfo: (id: string) => void
   onClose: () => void
 }
@@ -55,6 +56,7 @@ export const DayDetailModal = ({
   cancelActivityDataChanges,
   deleteActivity,
   setEditingActivity,
+  cancelEditingActivity,
   toggleActivityInfo,
   onClose
 }: DayDetailModalProps) => {
@@ -117,6 +119,7 @@ export const DayDetailModal = ({
                 cancelActivityDataChanges={cancelActivityDataChanges}
                 deleteActivity={deleteActivity}
                 setEditingActivity={setEditingActivity}
+                cancelEditingActivity={cancelEditingActivity}
                 toggleActivityInfo={toggleActivityInfo}
               />
             </div>

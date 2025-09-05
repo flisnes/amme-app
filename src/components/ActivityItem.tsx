@@ -26,7 +26,8 @@ interface ActivityItemProps {
   commitActivityDataChanges: (id: string) => void
   cancelActivityDataChanges: (id: string) => void
   deleteActivity: (id: string) => void
-  setEditingActivity: (id: string | null) => void
+  setEditingActivity: (id: string) => void
+  cancelEditingActivity: () => void
   toggleActivityInfo: (id: string) => void
   resumeActivity?: (id: string) => void
   currentActivity?: Activity | null
@@ -55,6 +56,7 @@ export const ActivityItem = ({
   cancelActivityDataChanges,
   deleteActivity,
   setEditingActivity,
+  cancelEditingActivity,
   toggleActivityInfo,
   resumeActivity,
   currentActivity,
@@ -66,6 +68,13 @@ export const ActivityItem = ({
                     (activity.type === 'breastfeeding' || activity.type === 'sleep') &&
                     !currentActivity &&
                     lastResumable?.id === activity.id
+  
+  // Check if any original data exists to show info button
+  const hasOriginalData = activity.originalStartTime || 
+                          activity.originalEndTime || 
+                          activity.originalFeedingType || 
+                          activity.originalDiaperType ||
+                          activity.originalNotes
   return (
     <div
       className={`activity-item ${!activity.endTime ? 'ongoing' : ''} ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
@@ -183,7 +192,7 @@ export const ActivityItem = ({
               className="save-btn"
               onClick={() => {
                 commitActivityDataChanges(activity.id)
-                setEditingActivity(null)
+                cancelEditingActivity()
               }}
             >
               Save
@@ -192,7 +201,7 @@ export const ActivityItem = ({
               className="cancel-btn"
               onClick={() => {
                 cancelActivityDataChanges(activity.id)
-                setEditingActivity(null)
+                cancelEditingActivity()
               }}
             >
               Cancel
@@ -242,29 +251,47 @@ export const ActivityItem = ({
                 )}
               </span>
               
-              {expandedActivityInfo.has(activity.id) && activity.originalStartTime && (
+              {expandedActivityInfo.has(activity.id) && hasOriginalData && (
                 <div className="original-info">
-                  <span className="original-time">
-                    {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
-                      <>
-                        {formatTime(activity.originalStartTime)}
-                        {activity.originalEndTime && ` - ${formatTime(activity.originalEndTime)}`}
-                        {activity.originalEndTime && (
-                          <span className="duration">
-                            ({formatDuration(activity.originalStartTime, activity.originalEndTime)})
-                          </span>
+                  <div className="original-label">Original:</div>
+                  {(activity.originalStartTime || activity.originalEndTime) && (
+                    <div className="original-item">
+                      <span className="original-field">Time:</span>
+                      <span className="original-value">
+                        {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
+                          <>
+                            {formatTime(activity.originalStartTime || activity.startTime)}
+                            {(activity.originalEndTime || activity.endTime) && ` - ${formatTime(activity.originalEndTime || activity.endTime!)}`}
+                            {(activity.originalEndTime || activity.endTime) && (
+                              <span className="duration">
+                                ({formatDuration(activity.originalStartTime || activity.startTime, (activity.originalEndTime || activity.endTime)!)})
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          formatTime(activity.originalStartTime || activity.startTime)
                         )}
-                      </>
-                    ) : (
-                      formatTime(activity.originalStartTime)
-                    )}
-                    {activity.originalFeedingType && (
-                      <span className="activity-subtype"> ({activity.originalFeedingType})</span>
-                    )}
-                    {activity.originalDiaperType && (
-                      <span className="activity-subtype"> ({activity.originalDiaperType})</span>
-                    )}
-                  </span>
+                      </span>
+                    </div>
+                  )}
+                  {activity.originalFeedingType && activity.originalFeedingType !== activity.feedingType && (
+                    <div className="original-item">
+                      <span className="original-field">Type:</span>
+                      <span className="original-value">{activity.originalFeedingType}</span>
+                    </div>
+                  )}
+                  {activity.originalDiaperType && activity.originalDiaperType !== activity.diaperType && (
+                    <div className="original-item">
+                      <span className="original-field">Type:</span>
+                      <span className="original-value">{activity.originalDiaperType}</span>
+                    </div>
+                  )}
+                  {activity.originalNotes && activity.originalNotes !== activity.notes && (
+                    <div className="original-item">
+                      <span className="original-field">Notes:</span>
+                      <span className="original-value">{activity.originalNotes}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -278,7 +305,7 @@ export const ActivityItem = ({
                   <TbPlayerPlay />
                 </button>
               )}
-              {activity.originalStartTime && (
+              {hasOriginalData && (
                 <button 
                   className="info-btn"
                   onClick={() => toggleActivityInfo(activity.id)}
