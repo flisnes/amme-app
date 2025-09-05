@@ -290,14 +290,71 @@ function App() {
     }
     
     const dataStr = JSON.stringify(exportData, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const filename = `mamalog-activities-${new Date().toISOString().split('T')[0]}.json`
     
+    // Check if we're on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    
+    if (navigator.share && isMobile) {
+      // Use Web Share API on mobile devices that support it
+      const blob = new Blob([dataStr], { type: 'application/json' })
+      const file = new File([blob], filename, { type: 'application/json' })
+      
+      navigator.share({
+        files: [file],
+        title: 'MamaLog Activities Export',
+        text: 'Export of your MamaLog activities data'
+      }).catch(error => {
+        console.log('Share API failed, falling back to download:', error)
+        fallbackDownload(dataStr, filename)
+      })
+    } else if (isIOSSafari) {
+      // Special handling for iOS Safari
+      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`
+      const newWindow = window.open(dataUri, '_blank')
+      
+      if (!newWindow) {
+        // Fallback if popup blocked
+        copyToClipboardFallback(dataStr, filename)
+      }
+    } else {
+      // Standard download for desktop browsers
+      fallbackDownload(dataStr, filename)
+    }
+  }
+  
+  const fallbackDownload = (dataStr: string, filename: string) => {
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(dataBlob)
-    link.download = `mamalog-activities-${new Date().toISOString().split('T')[0]}.json`
+    link.download = filename
+    link.style.display = 'none'
     document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    
+    // Add a small delay for better mobile compatibility
+    setTimeout(() => {
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(link.href)
+    }, 100)
+  }
+  
+  const copyToClipboardFallback = (dataStr: string, filename: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(dataStr).then(() => {
+        alert(`Export data copied to clipboard! You can paste it into a text file and save as "${filename}"`)
+      }).catch(() => {
+        showManualCopyDialog(dataStr, filename)
+      })
+    } else {
+      showManualCopyDialog(dataStr, filename)
+    }
+  }
+  
+  const showManualCopyDialog = (dataStr: string, filename: string) => {
+    const message = `Your browser doesn't support automatic downloads. Please copy the following data manually and save it as "${filename}":\n\n${dataStr.substring(0, 200)}...`
+    alert(message)
   }
 
   const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
