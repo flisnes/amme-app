@@ -1,5 +1,5 @@
 import type { Activity } from '../types/Activity'
-import { TbTrash, TbEdit, TbInfoCircle } from 'react-icons/tb'
+import { TbTrash, TbEdit, TbInfoCircle, TbPlayerPlay } from 'react-icons/tb'
 import type { ReactElement } from 'react'
 
 interface ActivityItemProps {
@@ -28,6 +28,9 @@ interface ActivityItemProps {
   deleteActivity: (id: string) => void
   setEditingActivity: (id: string | null) => void
   toggleActivityInfo: (id: string) => void
+  resumeActivity?: (id: string) => void
+  currentActivity?: Activity | null
+  getLastResumableActivity?: () => Activity | null
 }
 
 export const ActivityItem = ({
@@ -52,8 +55,17 @@ export const ActivityItem = ({
   cancelActivityDataChanges,
   deleteActivity,
   setEditingActivity,
-  toggleActivityInfo
+  toggleActivityInfo,
+  resumeActivity,
+  currentActivity,
+  getLastResumableActivity
 }: ActivityItemProps) => {
+  // Check if this activity can be resumed (only the most recent one)
+  const lastResumable = getLastResumableActivity ? getLastResumableActivity() : null
+  const canResume = activity.endTime && 
+                    (activity.type === 'breastfeeding' || activity.type === 'sleep') &&
+                    !currentActivity &&
+                    lastResumable?.id === activity.id
   return (
     <div
       className={`activity-item ${!activity.endTime ? 'ongoing' : ''} ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
@@ -257,6 +269,15 @@ export const ActivityItem = ({
               )}
             </div>
             <div className="activity-buttons">
+              {canResume && resumeActivity && (
+                <button 
+                  className="resume-btn"
+                  onClick={() => resumeActivity(activity.id)}
+                  title="Resume this activity"
+                >
+                  <TbPlayerPlay />
+                </button>
+              )}
               {activity.originalStartTime && (
                 <button 
                   className="info-btn"

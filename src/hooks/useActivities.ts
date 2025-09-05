@@ -395,6 +395,63 @@ export const useActivities = () => {
     return newActivities.length
   }
 
+  const getLastResumableActivity = (): Activity | null => {
+    // Find the most recent completed activity that is resumable (breastfeeding or sleep)
+    const resumableTypes: ActivityType[] = ['breastfeeding', 'sleep']
+    return activities.find(activity => 
+      resumableTypes.includes(activity.type) && 
+      activity.endTime !== undefined
+    ) || null
+  }
+
+  const resumeActivity = (activityId: string) => {
+    // Find the activity to resume
+    const activityToResume = activities.find(a => a.id === activityId)
+    if (!activityToResume || !activityToResume.endTime) return
+    
+    // Check if it's a resumable type
+    const resumableTypes: ActivityType[] = ['breastfeeding', 'sleep']
+    if (!resumableTypes.includes(activityToResume.type)) return
+    
+    // Verify this is the most recent resumable activity
+    const lastResumable = getLastResumableActivity()
+    if (!lastResumable || lastResumable.id !== activityId) return
+    
+    // If there's already a current activity, stop it first
+    if (currentActivity) {
+      const completedActivity = {
+        ...currentActivity,
+        endTime: new Date()
+      }
+      setActivities(prev => prev.map(activity => 
+        activity.id === currentActivity.id ? completedActivity : activity
+      ))
+    }
+    
+    // Remove the end time from the activity to resume it
+    const resumedActivity = {
+      ...activityToResume,
+      endTime: undefined
+    }
+    
+    // Update the activity in the list
+    setActivities(prev => {
+      const newActivities = prev.map(activity => 
+        activity.id === activityId ? resumedActivity : activity
+      )
+      
+      // Update daily stats
+      setDailyStats(prevStats => 
+        updateDailyStatsForActivity(resumedActivity, activityToResume, newActivities, prevStats)
+      )
+      
+      return newActivities
+    })
+    
+    // Set it as the current activity
+    setCurrentActivity(resumedActivity)
+  }
+
   return {
     // State
     activities,
@@ -412,6 +469,8 @@ export const useActivities = () => {
     cancelActivityDataChanges,
     deleteActivity,
     undoDelete,
-    importActivities
+    importActivities,
+    resumeActivity,
+    getLastResumableActivity
   }
 }

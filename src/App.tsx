@@ -31,7 +31,9 @@ function App() {
     cancelActivityDataChanges,
     deleteActivity,
     undoDelete,
-    importActivities
+    importActivities,
+    resumeActivity,
+    getLastResumableActivity
   } = useActivities()
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
   const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
@@ -472,6 +474,9 @@ function App() {
                     deleteActivity={deleteActivity}
                     setEditingActivity={setEditingActivity}
                     toggleActivityInfo={toggleActivityInfo}
+                    resumeActivity={resumeActivity}
+                    currentActivity={currentActivity}
+                    getLastResumableActivity={getLastResumableActivity}
                   />
                 </li>
                 ))}
@@ -508,6 +513,9 @@ function App() {
                     deleteActivity={deleteActivity}
                     setEditingActivity={setEditingActivity}
                     toggleActivityInfo={toggleActivityInfo}
+                    resumeActivity={resumeActivity}
+                    currentActivity={currentActivity}
+                    getLastResumableActivity={getLastResumableActivity}
                   />
                 </li>
                 ))}
