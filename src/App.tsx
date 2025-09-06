@@ -37,7 +37,7 @@ function App() {
     startEditingActivity
   } = useActivities()
   const [editingActivity, setEditingActivity] = useState<string | null>(null)
-  const [expandedActivityInfo, setExpandedActivityInfo] = useState<Set<string>>(new Set())
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [showBurgerMenu, setShowBurgerMenu] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [currentView, setCurrentView] = useState<'activities' | 'calendar'>('activities')
@@ -276,15 +276,16 @@ function App() {
 
 
 
-  const toggleActivityInfo = (activityId: string) => {
-    setExpandedActivityInfo(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(activityId)) {
-        newSet.delete(activityId)
+
+  const toggleExpanded = (activityId: string) => {
+    setExpandedItems(prev => {
+      if (prev.has(activityId)) {
+        // If clicking on the currently expanded item, collapse it
+        return new Set()
       } else {
-        newSet.add(activityId)
+        // If clicking on a different item, expand only that one
+        return new Set([activityId])
       }
-      return newSet
     })
   }
 
@@ -466,7 +467,6 @@ function App() {
                     editingActivity={editingActivity}
                     touchState={touchState}
                     slidingOutItems={slidingOutItems}
-                    expandedActivityInfo={expandedActivityInfo}
                     currentTime={currentTime}
                     getSwipeTransform={getSwipeTransform}
                     getSwipeOpacity={getSwipeOpacity}
@@ -484,7 +484,8 @@ function App() {
                     deleteActivity={deleteActivity}
                     setEditingActivity={handleStartEditing}
                     cancelEditingActivity={handleCancelEditing}
-                    toggleActivityInfo={toggleActivityInfo}
+                    expandedItems={expandedItems}
+                    toggleExpanded={toggleExpanded}
                     resumeActivity={resumeActivity}
                     currentActivity={currentActivity}
                     getLastResumableActivity={getLastResumableActivity}
@@ -506,7 +507,6 @@ function App() {
                     editingActivity={editingActivity}
                     touchState={touchState}
                     slidingOutItems={slidingOutItems}
-                    expandedActivityInfo={expandedActivityInfo}
                     currentTime={currentTime}
                     getSwipeTransform={getSwipeTransform}
                     getSwipeOpacity={getSwipeOpacity}
@@ -524,7 +524,8 @@ function App() {
                     deleteActivity={deleteActivity}
                     setEditingActivity={handleStartEditing}
                     cancelEditingActivity={handleCancelEditing}
-                    toggleActivityInfo={toggleActivityInfo}
+                    expandedItems={expandedItems}
+                    toggleExpanded={toggleExpanded}
                     resumeActivity={resumeActivity}
                     currentActivity={currentActivity}
                     getLastResumableActivity={getLastResumableActivity}
@@ -584,7 +585,6 @@ function App() {
           editingActivity={editingActivity}
           touchState={touchState}
           slidingOutItems={slidingOutItems}
-          expandedActivityInfo={expandedActivityInfo}
           currentTime={currentTime}
           getSwipeTransform={getSwipeTransform}
           getSwipeOpacity={getSwipeOpacity}
@@ -602,7 +602,8 @@ function App() {
           deleteActivity={deleteActivity}
           setEditingActivity={handleStartEditing}
           cancelEditingActivity={handleCancelEditing}
-          toggleActivityInfo={toggleActivityInfo}
+          expandedItems={expandedItems}
+          toggleExpanded={toggleExpanded}
           onClose={() => setSelectedDay(null)}
         />
       )}

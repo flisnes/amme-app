@@ -236,7 +236,6 @@
 }
 
 .activity-item {
-  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
   position: relative;
   touch-action: pan-y;
@@ -244,6 +243,122 @@
   background: var(--bg-card);
   border-radius: 8px;
   margin-bottom: 2px;
+}
+
+.activity-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.activity-compact-row:hover {
+  background: var(--bg-secondary);
+}
+
+.activity-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.activity-compact-text {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.activity-expanded-details {
+  padding: 1rem;
+  margin-top: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: expandIn 0.2s ease-out;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.activity-notes {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: var(--bg-primary);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-feeding);
+}
+
+.activity-notes strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.activity-expanded-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.activity-expanded-buttons .edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--accent-diaper);
+  color: var(--accent-diaper-text);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.activity-expanded-buttons .edit-btn:hover {
+  background: var(--accent-orange);
+  color: var(--accent-orange-text);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.activity-compact-row .resume-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  color: var(--accent-feeding-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-compact-row .resume-btn:hover {
+  background: var(--accent-feeding);
+  color: var(--accent-feeding-text);
 }
 
 .activity-icon-container {
@@ -997,39 +1112,52 @@
 }
 
 .original-info {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: var(--bg-secondary);
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-primary);
   border-radius: 6px;
   border-left: 3px solid var(--accent-orange);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .original-label {
-  color: var(--accent-orange-text);
+  color: var(--text-primary);
   font-weight: 600;
-  margin-bottom: 0.25rem;
-  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.original-label::before {
+  content: "↻";
+  color: var(--accent-orange);
+  font-size: 1rem;
 }
 
 .original-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
   color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .original-item:last-child {
   margin-bottom: 0;
+  border-bottom: none;
 }
 
 .original-field {
   color: var(--text-muted);
-  margin-right: 0.5rem;
-  min-width: 3rem;
-  font-weight: 500;
+  margin-right: 0.75rem;
+  min-width: 4rem;
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
 .original-value {
@@ -1040,7 +1168,8 @@
 
 .original-value .duration {
   color: var(--text-muted);
-  margin-left: 0.25rem;
+  margin-left: 0.5rem;
+  font-style: italic;
 }
 
 /* Header styling */

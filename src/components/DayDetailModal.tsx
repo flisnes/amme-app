@@ -11,7 +11,6 @@ interface DayDetailModalProps {
     activityId?: string
   }
   slidingOutItems: Set<string>
-  expandedActivityInfo: Set<string>
   currentTime: Date
   getSwipeTransform: (id: string) => string
   getSwipeOpacity: (id: string) => number
@@ -29,7 +28,8 @@ interface DayDetailModalProps {
   deleteActivity: (id: string) => void
   setEditingActivity: (id: string) => void
   cancelEditingActivity: () => void
-  toggleActivityInfo: (id: string) => void
+  expandedItems: Set<string>
+  toggleExpanded: (id: string) => void
   onClose: () => void
 }
 
@@ -39,7 +39,6 @@ export const DayDetailModal = ({
   editingActivity,
   touchState,
   slidingOutItems,
-  expandedActivityInfo,
   currentTime,
   getSwipeTransform,
   getSwipeOpacity,
@@ -57,7 +56,8 @@ export const DayDetailModal = ({
   deleteActivity,
   setEditingActivity,
   cancelEditingActivity,
-  toggleActivityInfo,
+  expandedItems,
+  toggleExpanded,
   onClose
 }: DayDetailModalProps) => {
   // Get activities for the selected day
@@ -102,7 +102,6 @@ export const DayDetailModal = ({
                 editingActivity={editingActivity}
                 touchState={touchState}
                 slidingOutItems={slidingOutItems}
-                expandedActivityInfo={expandedActivityInfo}
                 currentTime={currentTime}
                 getSwipeTransform={getSwipeTransform}
                 getSwipeOpacity={getSwipeOpacity}
@@ -120,7 +119,8 @@ export const DayDetailModal = ({
                 deleteActivity={deleteActivity}
                 setEditingActivity={setEditingActivity}
                 cancelEditingActivity={cancelEditingActivity}
-                toggleActivityInfo={toggleActivityInfo}
+                expandedItems={expandedItems}
+                toggleExpanded={toggleExpanded}
               />
             </div>
           ))}

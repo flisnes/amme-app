@@ -1,5 +1,5 @@
 import type { Activity } from '../types/Activity'
-import { TbTrash, TbEdit, TbInfoCircle, TbPlayerPlay } from 'react-icons/tb'
+import { TbTrash, TbEdit, TbPlayerPlay } from 'react-icons/tb'
 import type { ReactElement } from 'react'
 
 interface ActivityItemProps {
@@ -10,7 +10,6 @@ interface ActivityItemProps {
     activityId?: string
   }
   slidingOutItems: Set<string>
-  expandedActivityInfo: Set<string>
   currentTime: Date
   getSwipeTransform: (id: string) => string
   getSwipeOpacity: (id: string) => number
@@ -28,7 +27,8 @@ interface ActivityItemProps {
   deleteActivity: (id: string) => void
   setEditingActivity: (id: string) => void
   cancelEditingActivity: () => void
-  toggleActivityInfo: (id: string) => void
+  expandedItems: Set<string>
+  toggleExpanded: (id: string) => void
   resumeActivity?: (id: string) => void
   currentActivity?: Activity | null
   getLastResumableActivity?: () => Activity | null
@@ -39,7 +39,6 @@ export const ActivityItem = ({
   editingActivity,
   touchState,
   slidingOutItems,
-  expandedActivityInfo,
   currentTime,
   getSwipeTransform,
   getSwipeOpacity,
@@ -57,7 +56,8 @@ export const ActivityItem = ({
   deleteActivity,
   setEditingActivity,
   cancelEditingActivity,
-  toggleActivityInfo,
+  expandedItems,
+  toggleExpanded,
   resumeActivity,
   currentActivity,
   getLastResumableActivity
@@ -69,12 +69,32 @@ export const ActivityItem = ({
                     !currentActivity &&
                     lastResumable?.id === activity.id
   
-  // Check if any original data exists to show info button
+  // Check if any original data exists
   const hasOriginalData = activity.originalStartTime || 
                           activity.originalEndTime || 
                           activity.originalFeedingType || 
                           activity.originalDiaperType ||
                           activity.originalNotes
+  
+  // Check if this activity is expanded
+  const isExpanded = expandedItems.has(activity.id)
+  
+  // Create compact activity label
+  const getCompactLabel = () => {
+    if (activity.type === 'breastfeeding') {
+      if (activity.feedingType === 'left') return 'Left'
+      if (activity.feedingType === 'right') return 'Right'
+      if (activity.feedingType === 'bottle') return 'Bottle'
+      return 'Left' // default
+    } else if (activity.type === 'diaper') {
+      if (activity.diaperType) {
+        return activity.diaperType.charAt(0).toUpperCase() + activity.diaperType.slice(1)
+      }
+      return 'Pee' // default
+    } else {
+      return 'Sleep'
+    }
+  }
   return (
     <div
       className={`activity-item ${!activity.endTime ? 'ongoing' : ''} ${touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id ? 'swiping' : ''}`}
@@ -210,48 +230,62 @@ export const ActivityItem = ({
         </div>
       ) : (
         <>
-          <span className="activity-type">
-            <span 
-              className="activity-icon-container"
-              style={{
-                transform: `scale(1)`,
-                transition: (touchState.gestureType === 'activity-swipe' && touchState.activityId === activity.id) ? 'none' : 'transform 0.2s ease'
-              }}
-            >
-              {getActivityIcon(activity.type)}
-            </span>
-            {' '}
-            {getActivityLabel(activity)}
-          </span>
-          <div className="activity-info">
-            <div className="activity-time-container">
-              <span className="activity-time">
+          {/* Compact activity row - clickable to expand */}
+          <div 
+            className="activity-compact-row"
+            onClick={() => toggleExpanded(activity.id)}
+          >
+            <div className="activity-main-info">
+              <span className="activity-icon">
+                {getActivityIcon(activity.type)}
+              </span>
+              <span className="activity-compact-text">
+                {getCompactLabel()}
+                {' • '}
                 {(activity.type === 'breastfeeding' || activity.type === 'sleep') ? (
                   <>
                     {formatTime(activity.startTime)}
-                    {activity.endTime ? ` - ${formatTime(activity.endTime)}` : ` - ${formatTime(currentTime)}`}
+                    {activity.endTime ? `-${formatTime(activity.endTime)}` : `-${formatTime(currentTime)}`}
+                    {' • '}
                     {activity.endTime ? (
-                      <span className="duration">
-                        ({formatDuration(activity.startTime, activity.endTime)})
-                      </span>
+                      formatDuration(activity.startTime, activity.endTime)
                     ) : (
-                      <span className="duration">
-                        ({formatLiveDuration(activity.startTime)})
-                      </span>
+                      formatLiveDuration(activity.startTime)
                     )}
                   </>
                 ) : (
                   formatTime(activity.startTime)
                 )}
-                {activity.feedingType && (
-                  <span className="activity-subtype"> ({activity.feedingType})</span>
-                )}
-                {activity.diaperType && (
-                  <span className="activity-subtype"> ({activity.diaperType})</span>
-                )}
               </span>
+            </div>
+            
+            {/* Only show resume button by default */}
+            {canResume && resumeActivity && (
+              <button 
+                className="resume-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  resumeActivity(activity.id)
+                }}
+                title="Resume this activity"
+              >
+                <TbPlayerPlay />
+              </button>
+            )}
+          </div>
+
+          {/* Expanded details */}
+          {isExpanded && (
+            <div className="activity-expanded-details">
+              {/* Notes */}
+              {activity.notes && (
+                <div className="activity-notes">
+                  <strong>Notes:</strong> {activity.notes}
+                </div>
+              )}
               
-              {expandedActivityInfo.has(activity.id) && hasOriginalData && (
+              {/* Original data if edited */}
+              {hasOriginalData && (
                 <div className="original-info">
                   <div className="original-label">Original:</div>
                   {(activity.originalStartTime || activity.originalEndTime) && (
@@ -294,35 +328,19 @@ export const ActivityItem = ({
                   )}
                 </div>
               )}
-            </div>
-            <div className="activity-buttons">
-              {canResume && resumeActivity && (
+              
+              {/* Action buttons in expanded view */}
+              <div className="activity-expanded-buttons">
                 <button 
-                  className="resume-btn"
-                  onClick={() => resumeActivity(activity.id)}
-                  title="Resume this activity"
+                  className="edit-btn"
+                  onClick={() => setEditingActivity(activity.id)}
+                  title="Edit activity"
                 >
-                  <TbPlayerPlay />
+                  <TbEdit /> Edit
                 </button>
-              )}
-              {hasOriginalData && (
-                <button 
-                  className="info-btn"
-                  onClick={() => toggleActivityInfo(activity.id)}
-                  title="View original activity info"
-                >
-                  <TbInfoCircle />
-                </button>
-              )}
-              <button 
-                className="edit-btn"
-                onClick={() => setEditingActivity(activity.id)}
-                title="Edit activity"
-              >
-                <TbEdit />
-              </button>
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>
